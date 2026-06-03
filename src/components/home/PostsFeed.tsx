@@ -4,8 +4,19 @@ import type { Post } from "@/types";
 import PostCard from "./PostCard";
 import MediaLightbox from "./MediaLightbox";
 
-export default function PostsFeed() {
-  // 🖼️ State cho lightbox: post đang mở + index media được click
+interface PostsFeedProps {
+  activeTab?: "For You" | "Following";
+}
+
+function normalizeMedia(raw: Post["media"]): string[] {
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw.filter((x): x is string => typeof x === "string");
+  if (typeof raw === "string") return [raw];
+  return [];
+}
+
+export default function PostsFeed({ activeTab: _activeTab }: PostsFeedProps) {
+  // 🖼️ State cho lightbox
   const [lightbox, setLightbox] = useState<{
     urls: string[];
     index: number;
@@ -29,7 +40,6 @@ export default function PostsFeed() {
         />
       ))}
 
-      {/* Lightbox full màn hình */}
       <MediaLightbox
         urls={lightbox?.urls ?? []}
         initialIndex={lightbox?.index ?? 0}
@@ -38,12 +48,4 @@ export default function PostsFeed() {
       />
     </div>
   );
-}
-
-/** Helper: parse media thành string[] — copy logic từ PostCard (chỉ để lấy URLs) */
-function normalizeMedia(raw: Post["media"]): string[] {
-  if (!raw) return [];
-  if (Array.isArray(raw)) return raw.filter((x): x is string => typeof x === "string");
-  if (typeof raw === "string") return [raw];
-  return [];
 }

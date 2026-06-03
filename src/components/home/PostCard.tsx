@@ -1,5 +1,11 @@
 import { Heart, MessageSquare, Share2, MoreHorizontal, Play, VolumeX } from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
+
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 import type { Post } from "@/types";
 
 interface PostCardProps {
@@ -21,9 +27,16 @@ function timeAgo(dateStr: string): string {
   return `${days}d ago`;
 }
 
-/**
- * 🧩 Đảm bảo media luôn là string[] (tương thích cả khi backend trả string đơn hoặc JSON)
- */
+function getInitials(name: string) {
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+}
+
 function normalizeMedia(raw: Post["media"]): string[] {
   if (!raw) return [];
   if (Array.isArray(raw)) return raw.filter((x): x is string => typeof x === "string");
@@ -33,31 +46,45 @@ function normalizeMedia(raw: Post["media"]): string[] {
 
 export default function PostCard({ post, onMediaClick }: PostCardProps) {
   const media = useMemo(() => normalizeMedia(post.media), [post.media]);
+  const initials = getInitials(post.author.displayName);
 
   return (
-    <div className="glass-mac rounded-2xl overflow-hidden">
+    <article className="glass-mac rounded-2xl overflow-hidden">
       {/* HEADER */}
-      <div className="flex items-center justify-between px-5 pt-5 pb-3">
-        <div className="flex items-center gap-3">
-          <img
-            src={post.author.avatarUrl}
-            alt={post.author.displayName}
-            className="h-10 w-10 rounded-full object-cover"
-          />
-          <div>
+      <header className="flex items-center justify-between px-5 pt-5 pb-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <Avatar>
+            <AvatarImage src={post.author.avatarUrl} alt={post.author.displayName} />
+            <AvatarFallback className="bg-linear-to-br from-cyber-purple to-electric-blue text-white text-xs font-bold">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
+          <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-bold text-zinc-200">
+              <span className="text-sm font-bold text-zinc-200 truncate">
                 {post.author.displayName}
               </span>
-              <span className="text-xs text-zinc-600">@{post.author.username}</span>
+              <span className="text-xs text-zinc-600 shrink-0">
+                @{post.author.username}
+              </span>
             </div>
             <span className="text-xs text-zinc-600">{timeAgo(post.createdAt)}</span>
           </div>
         </div>
-        <button className="p-1 text-zinc-500 hover:text-zinc-300 transition">
-          <MoreHorizontal className="h-4 w-4" />
-        </button>
-      </div>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="text-zinc-500 hover:text-zinc-300 hover:bg-white/5"
+              aria-label="Thêm"
+            >
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Thêm</TooltipContent>
+        </Tooltip>
+      </header>
 
       {/* BODY */}
       {post.bodyText && (
@@ -70,6 +97,8 @@ export default function PostCard({ post, onMediaClick }: PostCardProps) {
 
       {/* MEDIA GRID */}
       {media.length > 0 && <MediaGrid urls={media} onMediaClick={onMediaClick} />}
+
+      <Separator className="bg-white/5" />
 
       {/* STATS */}
       {post._count && (
@@ -86,27 +115,60 @@ export default function PostCard({ post, onMediaClick }: PostCardProps) {
         </div>
       )}
 
+      <Separator className="bg-white/5" />
+
       {/* ACTIONS */}
-      <div className="flex items-center border-t border-white/5">
-        <button className="flex-1 flex items-center justify-center gap-2 py-3 text-xs font-medium text-zinc-500 hover:text-neon-pink transition">
-          <Heart className="h-4 w-4" />
-          Like
-        </button>
-        <button className="flex-1 flex items-center justify-center gap-2 py-3 text-xs font-medium text-zinc-500 hover:text-electric-blue transition border-x border-white/5">
-          <MessageSquare className="h-4 w-4" />
-          Comment
-        </button>
-        <button className="flex-1 flex items-center justify-center gap-2 py-3 text-xs font-medium text-zinc-500 hover:text-cyber-purple transition">
-          <Share2 className="h-4 w-4" />
-          Share
-        </button>
+      <div className="flex items-center">
+        <ActionButton
+          label="Like"
+          icon={<Heart className="h-4 w-4" />}
+          hoverColor="hover:text-neon-pink"
+        />
+        <ActionButton
+          label="Comment"
+          icon={<MessageSquare className="h-4 w-4" />}
+          hoverColor="hover:text-electric-blue"
+          bordered
+        />
+        <ActionButton
+          label="Share"
+          icon={<Share2 className="h-4 w-4" />}
+          hoverColor="hover:text-cyber-purple"
+        />
       </div>
-    </div>
+    </article>
   );
 }
 
 /* ──────────────────────────────────────────────────────────── */
-/* MEDIA GRID — Facebook / Instagram style: 1 / 2 / 1+2 / 2x2   */
+/* ACTION BUTTON — shadcn Button (ghost) cho 3 nút               */
+/* ──────────────────────────────────────────────────────────── */
+
+interface ActionButtonProps {
+  label: string;
+  icon: React.ReactNode;
+  hoverColor: string;
+  bordered?: boolean;
+}
+
+function ActionButton({ label, icon, hoverColor, bordered }: ActionButtonProps) {
+  return (
+    <Button
+      variant="ghost"
+      className={cn(
+        "flex-1 h-11 rounded-none gap-2 text-xs font-medium text-zinc-500 hover:bg-white/5",
+        hoverColor,
+        bordered && "border-x border-white/5"
+      )}
+    >
+      {icon}
+      {label}
+    </Button>
+  );
+}
+
+/* ──────────────────────────────────────────────────────────── */
+/* MEDIA GRID — 1 / 2 / 1+2 / 2x2                                */
 /* ──────────────────────────────────────────────────────────── */
 
 interface MediaGridProps {
@@ -117,7 +179,6 @@ interface MediaGridProps {
 function MediaGrid({ urls, onMediaClick }: MediaGridProps) {
   if (urls.length === 0) return null;
 
-  // 1 media: full-width
   if (urls.length === 1) {
     return (
       <MediaItem
@@ -128,7 +189,6 @@ function MediaGrid({ urls, onMediaClick }: MediaGridProps) {
     );
   }
 
-  // 2 media: 2 cột
   if (urls.length === 2) {
     return (
       <div className="grid grid-cols-2 gap-0.5 bg-black/40">
@@ -144,7 +204,6 @@ function MediaGrid({ urls, onMediaClick }: MediaGridProps) {
     );
   }
 
-  // 3 media: 1 lớn trái + 2 xếp dọc phải
   if (urls.length === 3) {
     return (
       <div className="grid grid-cols-2 gap-0.5 bg-black/40 aspect-[4/3]">
@@ -167,7 +226,6 @@ function MediaGrid({ urls, onMediaClick }: MediaGridProps) {
     );
   }
 
-  // 4 media (hoặc nhiều hơn — cắt về 4): grid 2x2
   const visible = urls.slice(0, 4);
   return (
     <div className="grid grid-cols-2 gap-0.5 bg-black/40 aspect-square">
@@ -184,9 +242,8 @@ function MediaGrid({ urls, onMediaClick }: MediaGridProps) {
 }
 
 /* ──────────────────────────────────────────────────────────── */
-/* MEDIA ITEM — render <img> hoặc <video autoPlay muted loop>   */
-/* • Click để mở lightbox                                         */
-/* • Video tự play, mute, loop, tạm dừng khi ra khỏi viewport     */
+/* MEDIA ITEM — <img> hoặc <video autoPlay muted loop>           */
+/* • IntersectionObserver: pause khi ra khỏi viewport             */
 /* ──────────────────────────────────────────────────────────── */
 
 interface MediaItemProps {
@@ -199,7 +256,6 @@ function MediaItem({ url, className = "", onClick }: MediaItemProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // 🎬 IntersectionObserver: video chỉ chạy khi nằm trong viewport
   useEffect(() => {
     if (!isVideoUrl(url)) return;
     const video = videoRef.current;
@@ -235,7 +291,6 @@ function MediaItem({ url, className = "", onClick }: MediaItemProps) {
           preload="metadata"
           className={className}
         />
-        {/* Overlay hint: nút play + icon mute */}
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
           <div className="h-10 w-10 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center">
             <Play className="h-4 w-4 text-white fill-white ml-0.5" />

@@ -1,8 +1,26 @@
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger
+} from "@/components/ui/tooltip";
 import { mockStories } from "@/mock";
 
 const CURRENT_USER_ID = "me";
+
+function getInitials(name: string) {
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+}
 
 export default function StoriesBar() {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -34,20 +52,34 @@ export default function StoriesBar() {
   return (
     <div className="relative group/stories">
       {canScrollLeft && (
-        <button
-          onClick={() => scroll("left")}
-          className="absolute -left-3 top-1/2 -translate-y-1/2 z-20 h-8 w-8 rounded-full bg-[#09090b] border border-white/10 flex items-center justify-center text-zinc-400 hover:text-white hover:border-white/20 transition shadow-lg opacity-0 group-hover/stories:opacity-100"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => scroll("left")}
+              className="absolute -left-3 top-1/2 -translate-y-1/2 z-20 h-8 w-8 rounded-full bg-[#09090b] border border-white/10 text-zinc-400 hover:text-white hover:border-white/20 opacity-0 group-hover/stories:opacity-100"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Trước</TooltipContent>
+        </Tooltip>
       )}
       {canScrollRight && (
-        <button
-          onClick={() => scroll("right")}
-          className="absolute -right-3 top-1/2 -translate-y-1/2 z-20 h-8 w-8 rounded-full bg-[#09090b] border border-white/10 flex items-center justify-center text-zinc-400 hover:text-white hover:border-white/20 transition shadow-lg opacity-0 group-hover/stories:opacity-100"
-        >
-          <ChevronRight className="h-4 w-4" />
-        </button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => scroll("right")}
+              className="absolute -right-3 top-1/2 -translate-y-1/2 z-20 h-8 w-8 rounded-full bg-[#09090b] border border-white/10 text-zinc-400 hover:text-white hover:border-white/20 opacity-0 group-hover/stories:opacity-100"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Sau</TooltipContent>
+        </Tooltip>
       )}
 
       <div
@@ -56,6 +88,7 @@ export default function StoriesBar() {
       >
         {mockStories.map((story) => {
           const isYou = story.author.id === CURRENT_USER_ID;
+          const initials = getInitials(story.author.displayName);
           return (
             <button key={story.id} className="shrink-0 group relative w-[118px] snap-start">
               <div
@@ -85,7 +118,7 @@ export default function StoriesBar() {
                     {isYou ? (
                       <>
                         <div className="h-10 w-10 rounded-full bg-zinc-800/90 border-2 border-dashed border-zinc-500 flex items-center justify-center">
-                          <PlusIcon />
+                          <Plus className="h-5 w-5 text-zinc-300" />
                         </div>
                         <span className="text-xs font-semibold text-white drop-shadow-lg">
                           {story.author.displayName}
@@ -93,13 +126,12 @@ export default function StoriesBar() {
                       </>
                     ) : (
                       <>
-                        <div className="h-8 w-8 rounded-full overflow-hidden ring-2 ring-white/30 shrink-0">
-                          <img
-                            src={story.author.avatarUrl}
-                            alt={story.author.displayName}
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
+                        <Avatar size="sm" className="ring-2 ring-white/30 shrink-0">
+                          <AvatarImage src={story.author.avatarUrl} alt={story.author.displayName} />
+                          <AvatarFallback className="bg-linear-to-br from-cyber-purple to-electric-blue text-white text-[10px] font-bold">
+                            {initials}
+                          </AvatarFallback>
+                        </Avatar>
                         <span className="text-xs font-semibold text-white drop-shadow-lg truncate max-w-[70px]">
                           {story.author.displayName}
                         </span>
@@ -119,21 +151,5 @@ export default function StoriesBar() {
         })}
       </div>
     </div>
-  );
-}
-
-function PlusIcon() {
-  return (
-    <svg
-      className="h-5 w-5 text-zinc-300"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M12 5v14M5 12h14" />
-    </svg>
   );
 }

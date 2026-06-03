@@ -1,4 +1,6 @@
 import { MainLayout } from "@/components/shared/MainLayout";
+import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import Login from "@/pages/Login";
 import {
@@ -116,7 +118,10 @@ export default function App() {
   return (
     <AuthProvider>
       <SocketProvider>
-        <AppContent />
+        <TooltipProvider delayDuration={200}>
+          <AppContent />
+          <Toaster position="top-center" richColors closeButton />
+        </TooltipProvider>
       </SocketProvider>
     </AuthProvider>
   );
