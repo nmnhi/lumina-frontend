@@ -23,7 +23,7 @@ export default function CreatePostBox() {
           <input
             type="text"
             placeholder={`What's on your mind, ${firstName}?`}
-            className="w-full rounded-full border border-white/10 bg-white/3 px-5 py-2.5 text-sm text-zinc-200 placeholder-zinc-500 outline-none transition focus:border-white/20 focus:bg-white/[0.05]"
+            className="w-full rounded-full border border-white/10 bg-white/3 px-5 py-2.5 text-sm text-zinc-200 placeholder-zinc-500 outline-none transition focus:border-white/20 focus:bg-white/5"
           />
         </div>
       </div>
@@ -47,7 +47,7 @@ export default function CreatePostBox() {
             iconClassName="bg-linear-to-br from-amber-400 to-yellow-500"
           />
         </div>
-        <button className="rounded-full bg-gradient-to-r from-cyber-purple to-neon-pink px-6 py-2 text-sm font-bold text-white shadow-lg shadow-cyber-purple/30 hover:brightness-110 hover:shadow-cyber-purple/50 transition">
+        <button className="rounded-full bg-linear-to-r from-cyber-purple to-neon-pink px-6 py-2 text-sm font-bold text-white shadow-lg shadow-cyber-purple/30 hover:brightness-110 hover:shadow-cyber-purple/50 transition">
           Post
         </button>
       </div>
