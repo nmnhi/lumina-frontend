@@ -1,9 +1,10 @@
-import { Heart, MessageSquare, Share2, MoreHorizontal, Play } from "lucide-react";
-import { useMemo } from "react";
+import { Heart, MessageSquare, Share2, MoreHorizontal, Play, VolumeX } from "lucide-react";
+import { useEffect, useMemo, useRef } from "react";
 import type { Post } from "@/types";
 
 interface PostCardProps {
   post: Post;
+  onMediaClick: (index: number) => void;
 }
 
 // 🎬 Nhận diện video qua phần mở rộng URL
@@ -30,7 +31,7 @@ function normalizeMedia(raw: Post["media"]): string[] {
   return [];
 }
 
-export default function PostCard({ post }: PostCardProps) {
+export default function PostCard({ post, onMediaClick }: PostCardProps) {
   const media = useMemo(() => normalizeMedia(post.media), [post.media]);
 
   return (
@@ -68,7 +69,7 @@ export default function PostCard({ post }: PostCardProps) {
       )}
 
       {/* MEDIA GRID */}
-      {media.length > 0 && <MediaGrid urls={media} />}
+      {media.length > 0 && <MediaGrid urls={media} onMediaClick={onMediaClick} />}
 
       {/* STATS */}
       {post._count && (
@@ -110,22 +111,24 @@ export default function PostCard({ post }: PostCardProps) {
 
 interface MediaGridProps {
   urls: string[];
+  onMediaClick: (index: number) => void;
 }
 
-function MediaGrid({ urls }: MediaGridProps) {
+function MediaGrid({ urls, onMediaClick }: MediaGridProps) {
   if (urls.length === 0) return null;
 
-  // 1 ảnh: full-width
+  // 1 media: full-width
   if (urls.length === 1) {
     return (
       <MediaItem
         url={urls[0]}
-        className="w-full max-h-[520px] aspect-[4/3] object-cover"
+        onClick={() => onMediaClick(0)}
+        className="w-full max-h-[520px] aspect-[4/3] object-cover cursor-pointer"
       />
     );
   }
 
-  // 2 ảnh: 2 cột
+  // 2 media: 2 cột
   if (urls.length === 2) {
     return (
       <div className="grid grid-cols-2 gap-0.5 bg-black/40">
@@ -133,28 +136,38 @@ function MediaGrid({ urls }: MediaGridProps) {
           <MediaItem
             key={u + i}
             url={u}
-            className="w-full aspect-square object-cover"
+            onClick={() => onMediaClick(i)}
+            className="w-full aspect-square object-cover cursor-pointer"
           />
         ))}
       </div>
     );
   }
 
-  // 3 ảnh: 1 lớn trái + 2 xếp dọc phải
+  // 3 media: 1 lớn trái + 2 xếp dọc phải
   if (urls.length === 3) {
     return (
       <div className="grid grid-cols-2 gap-0.5 bg-black/40 aspect-[4/3]">
         <MediaItem
           url={urls[0]}
-          className="w-full h-full object-cover row-span-2"
+          onClick={() => onMediaClick(0)}
+          className="w-full h-full object-cover row-span-2 cursor-pointer"
         />
-        <MediaItem url={urls[1]} className="w-full h-full object-cover" />
-        <MediaItem url={urls[2]} className="w-full h-full object-cover" />
+        <MediaItem
+          url={urls[1]}
+          onClick={() => onMediaClick(1)}
+          className="w-full h-full object-cover cursor-pointer"
+        />
+        <MediaItem
+          url={urls[2]}
+          onClick={() => onMediaClick(2)}
+          className="w-full h-full object-cover cursor-pointer"
+        />
       </div>
     );
   }
 
-  // 4 ảnh (hoặc nhiều hơn — cắt về 4): grid 2x2
+  // 4 media (hoặc nhiều hơn — cắt về 4): grid 2x2
   const visible = urls.slice(0, 4);
   return (
     <div className="grid grid-cols-2 gap-0.5 bg-black/40 aspect-square">
@@ -162,7 +175,8 @@ function MediaGrid({ urls }: MediaGridProps) {
         <MediaItem
           key={u + i}
           url={u}
-          className="w-full h-full object-cover"
+          onClick={() => onMediaClick(i)}
+          className="w-full h-full object-cover cursor-pointer"
         />
       ))}
     </div>
@@ -170,33 +184,77 @@ function MediaGrid({ urls }: MediaGridProps) {
 }
 
 /* ──────────────────────────────────────────────────────────── */
-/* MEDIA ITEM — render <img> hoặc <video> dựa trên đuôi file     */
+/* MEDIA ITEM — render <img> hoặc <video autoPlay muted loop>   */
+/* • Click để mở lightbox                                         */
+/* • Video tự play, mute, loop, tạm dừng khi ra khỏi viewport     */
 /* ──────────────────────────────────────────────────────────── */
 
 interface MediaItemProps {
   url: string;
   className?: string;
+  onClick: () => void;
 }
 
-function MediaItem({ url, className = "" }: MediaItemProps) {
+function MediaItem({ url, className = "", onClick }: MediaItemProps) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // 🎬 IntersectionObserver: video chỉ chạy khi nằm trong viewport
+  useEffect(() => {
+    if (!isVideoUrl(url)) return;
+    const video = videoRef.current;
+    const container = containerRef.current;
+    if (!video || !container) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          video.play().catch(() => {
+            /* autoplay có thể bị chặn — bỏ qua */
+          });
+        } else {
+          video.pause();
+        }
+      },
+      { threshold: 0.5 }
+    );
+
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [url]);
+
   if (isVideoUrl(url)) {
     return (
-      <div className="relative bg-black">
+      <div ref={containerRef} className="relative bg-black" onClick={onClick}>
         <video
+          ref={videoRef}
           src={url}
-          className={className}
-          controls
+          muted
+          loop
           playsInline
           preload="metadata"
+          className={className}
         />
+        {/* Overlay hint: nút play + icon mute */}
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <div className="h-12 w-12 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center">
-            <Play className="h-5 w-5 text-white fill-white ml-0.5" />
+          <div className="h-10 w-10 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center">
+            <Play className="h-4 w-4 text-white fill-white ml-0.5" />
           </div>
+        </div>
+        <div className="pointer-events-none absolute top-2 left-2 h-6 w-6 rounded-md bg-black/50 backdrop-blur-sm flex items-center justify-center">
+          <VolumeX className="h-3 w-3 text-white" />
         </div>
       </div>
     );
   }
 
-  return <img src={url} alt="post media" className={className} loading="lazy" />;
+  return (
+    <img
+      src={url}
+      alt="post media"
+      className={className}
+      loading="lazy"
+      onClick={onClick}
+    />
+  );
 }
