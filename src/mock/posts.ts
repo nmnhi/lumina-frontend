@@ -14,7 +14,8 @@ export const mockPosts = [
         "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"
     },
     _count: { likes: 42, comments: 7 },
-    createdAt: "2026-06-04T10:00:00Z"
+    createdAt: "2026-06-04T10:00:00Z",
+    updatedAt: "2026-06-04T10:00:00Z"
   },
   {
     id: "2",
@@ -31,7 +32,8 @@ export const mockPosts = [
         "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80"
     },
     _count: { likes: 128, comments: 23 },
-    createdAt: "2026-06-04T08:00:00Z"
+    createdAt: "2026-06-04T08:00:00Z",
+    updatedAt: "2026-06-04T08:00:00Z"
   },
   {
     id: "3",
@@ -48,6 +50,7 @@ export const mockPosts = [
         "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&auto=format&fit=crop&q=80"
     },
     _count: { likes: 89, comments: 14 },
-    createdAt: "2026-06-04T06:00:00Z"
+    createdAt: "2026-06-04T06:00:00Z",
+    updatedAt: "2026-06-04T06:00:00Z"
   }
 ];
