@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
+import { cn, timeAgo } from "@/lib/utils";
 import type { Post } from "@/types";
 
 interface PostCardProps {
@@ -16,16 +16,6 @@ interface PostCardProps {
 // 🎬 Nhận diện video qua phần mở rộng URL
 const VIDEO_EXT = /\.(mp4|webm|ogg|mov|m3u8)(\?|$)/i;
 const isVideoUrl = (url: string) => VIDEO_EXT.test(url);
-
-function timeAgo(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  const days = Math.floor(hrs / 24);
-  return `${days}d ago`;
-}
 
 function getInitials(name: string) {
   return name
@@ -184,7 +174,7 @@ function MediaGrid({ urls, onMediaClick }: MediaGridProps) {
       <MediaItem
         url={urls[0]}
         onClick={() => onMediaClick(0)}
-        className="w-full max-h-[520px] aspect-[4/3] object-cover cursor-pointer"
+        className="w-full max-h-[520px] aspect-4/3 object-cover cursor-pointer"
       />
     );
   }
@@ -206,7 +196,7 @@ function MediaGrid({ urls, onMediaClick }: MediaGridProps) {
 
   if (urls.length === 3) {
     return (
-      <div className="grid grid-cols-2 gap-0.5 bg-black/40 aspect-[4/3]">
+      <div className="grid grid-cols-2 gap-0.5 bg-black/40 aspect-4/3">
         <MediaItem
           url={urls[0]}
           onClick={() => onMediaClick(0)}

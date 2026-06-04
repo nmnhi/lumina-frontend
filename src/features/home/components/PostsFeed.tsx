@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { mockPosts } from "@/mock";
+import { mockPosts } from "@/features/home/mock/posts";
 import type { Post } from "@/types";
 import PostCard from "./PostCard";
 import MediaLightbox from "./MediaLightbox";

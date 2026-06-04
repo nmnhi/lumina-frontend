@@ -1,6 +1,6 @@
 import background from "@/assets/images/background.png";
-import { useAuth } from "@/hooks/useAuth";
-import { loginApi } from "@/services/auth";
+import { useAuth } from "@/features/auth/useAuth";
+import { loginApi } from "@/features/auth/api/auth";
 import { Eye, EyeOff } from "lucide-react";
 import React, { useState } from "react";
 

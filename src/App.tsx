@@ -1,20 +1,20 @@
 import { MainLayout } from "@/components/shared/MainLayout";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { useAuth } from "@/hooks/useAuth";
-import Login from "@/pages/Login";
+import { useAuth } from "@/features/auth/useAuth";
+import Login from "@/features/auth/page/Login";
 import {
   Navigate,
   Route,
   BrowserRouter as Router,
   Routes
 } from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext";
+import { AuthProvider } from "@/features/auth/AuthContext";
 import { SocketProvider } from "./context/SocketContext";
-import Register from "./pages/Register";
-import Home from "./pages/Home";
-import Chat from "./pages/Chat";
-import Profile from "./pages/Profile";
+import Register from "@/features/auth/page/Register";
+import Home from "@/features/home/page/Home";
+import Chat from "@/features/chat/page/Chat";
+import Profile from "@/features/profile/page/Profile";
 
 // 🛡️ BỘ LỌC BẢO VỆ CHẶT CHẼ: BẮT BUỘC ĐĂNG NHẬP (PROTECTED ROUTE)
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {

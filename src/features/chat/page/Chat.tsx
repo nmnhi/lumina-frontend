@@ -1,17 +1,8 @@
 import { useSocket } from "@/hooks/useSocket";
-import { Search, Send, Phone, Video, MoreHorizontal } from "lucide-react";
+import { timeAgo } from "@/lib/utils";
+import { Search, Send, Phone, Video, MoreHorizontal, MessageSquare } from "lucide-react";
 import { useState } from "react";
-import { mockConversations } from "@/mock";
-
-function timeAgo(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  const days = Math.floor(hrs / 24);
-  return `${days}d ago`;
-}
+import { mockConversations } from "@/features/chat/mock/conversations";
 
 export default function Chat() {
   const { onlineUsers } = useSocket();
@@ -42,9 +33,9 @@ export default function Chat() {
               <button
                 key={conversation.id}
                 onClick={() => setActiveChat(conversation.id)}
-                className={`w-full flex items-center gap-3 rounded-xl p-3 transition ${
+                className={`w-full flex items-center gap-3 rounded-xl p-3 transition-all duration-200 ${
                   activeChat === conversation.id
-                    ? "bg-white/10"
+                    ? "bg-linear-to-r from-electric-blue/15 via-electric-blue/8 to-transparent shadow-[inset_0_0_20px_rgba(59,130,246,0.06)]"
                     : "hover:bg-white/5"
                 }`}
               >
@@ -52,7 +43,11 @@ export default function Chat() {
                   <img
                     src={conversation.partner.avatarUrl}
                     alt={conversation.partner.displayName}
-                    className="h-10 w-10 rounded-full object-cover"
+                    className={`h-10 w-10 rounded-full object-cover transition-all duration-200 ${
+                      activeChat === conversation.id
+                        ? "ring-2 ring-electric-blue/50 shadow-[0_0_10px_rgba(59,130,246,0.3)]"
+                        : ""
+                    }`}
                   />
                   {isOnline && (
                     <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-green-500 border-2 border-[#09090b]"></span>
@@ -60,17 +55,29 @@ export default function Chat() {
                 </div>
                 <div className="flex-1 min-w-0 text-left">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-bold text-zinc-200 truncate">
+                    <span className={`text-sm truncate ${
+                      activeChat === conversation.id
+                        ? "font-bold text-white"
+                        : "font-bold text-zinc-200"
+                    }`}>
                       {conversation.partner.displayName}
                     </span>
                     {conversation.lastMessage && (
-                      <span className="text-[10px] text-zinc-500 shrink-0 ml-2">
+                      <span className={`text-[10px] shrink-0 ml-2 ${
+                        activeChat === conversation.id
+                          ? "text-electric-blue/70"
+                          : "text-zinc-500"
+                      }`}>
                         {timeAgo(conversation.lastMessage.createdAt)}
                       </span>
                     )}
                   </div>
                   {conversation.lastMessage && (
-                    <p className="text-xs text-zinc-500 truncate mt-0.5">
+                    <p className={`text-xs truncate mt-0.5 ${
+                      activeChat === conversation.id
+                        ? "text-zinc-300"
+                        : "text-zinc-500"
+                    }`}>
                       {conversation.lastMessage.content}
                     </p>
                   )}
@@ -152,22 +159,5 @@ export default function Chat() {
         )}
       </div>
     </div>
-  );
-}
-
-function MessageSquare(props: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={props.className}
-    >
-      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-    </svg>
   );
 }

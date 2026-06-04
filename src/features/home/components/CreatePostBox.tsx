@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/features/auth/useAuth";
 
 const FALLBACK_AVATAR =
   "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80";

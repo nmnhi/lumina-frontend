@@ -1,11 +1,22 @@
+import { useState, useRef, useEffect } from "react";
 import { Settings, Calendar, MapPin, Link as LinkIcon } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
-
-const mockTabs = ["Posts", "Likes", "Media"] as const;
+import { useAuth } from "@/features/auth/useAuth";
+import { mockTabs, tabContents } from "@/features/profile/mock/profile";
 
 export default function Profile() {
   const { user } = useAuth();
   const currentUser = user;
+  const [activeTab, setActiveTab] = useState<string>("Posts");
+  const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
+  const tabsRef = useRef<Map<string, HTMLButtonElement>>(null);
+
+  // Smoothly move the sliding indicator to the active tab
+  useEffect(() => {
+    const btn = tabsRef.current?.get(activeTab);
+    if (btn) {
+      setIndicatorStyle({ left: btn.offsetLeft, width: btn.offsetWidth });
+    }
+  }, [activeTab]);
 
   return (
     <div className="space-y-4">
@@ -74,28 +85,49 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* TABS */}
-      <div className="flex gap-1 glass-mac rounded-2xl p-1">
-        {mockTabs.map((tab) => (
-          <button
-            key={tab}
-            className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition ${
-              tab === "Posts"
-                ? "bg-white/10 text-zinc-200"
-                : "text-zinc-500 hover:text-zinc-300"
-            }`}
-          >
-            {tab}
-          </button>
-        ))}
+      {/* TABS with sliding indicator */}
+      <div className="glass-mac rounded-2xl p-1 relative">
+        {/* Sliding background indicator */}
+        <div
+          className="absolute top-1 bottom-1 rounded-xl bg-linear-to-r from-electric-blue/20 via-electric-blue/10 to-transparent shadow-[inset_0_0_16px_rgba(59,130,246,0.1)] transition-all duration-300 ease-in-out"
+          style={{ left: indicatorStyle.left, width: indicatorStyle.width }}
+        />
+
+        <div className="relative flex gap-1">
+          {mockTabs.map((tab) => {
+            const isActive = activeTab === tab;
+            return (
+              <button
+                key={tab}
+                ref={(el) => {
+                  if (!tabsRef.current) tabsRef.current = new Map();
+                  if (el) tabsRef.current.set(tab, el);
+                }}
+                onClick={() => setActiveTab(tab)}
+                className={`flex-1 py-2.5 rounded-xl text-xs font-bold relative z-10 transition-colors duration-300 ${
+                  isActive
+                    ? "text-white"
+                    : "text-zinc-500 hover:text-zinc-300"
+                }`}
+              >
+                {tab}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {/* EMPTY POST STATE */}
-      <div className="glass-mac rounded-2xl p-10 text-center">
+      {/* TAB CONTENT with fade animation */}
+      <div
+        key={activeTab}
+        className="glass-mac rounded-2xl p-10 text-center animate-in fade-in slide-in-from-bottom-2 duration-300"
+      >
         <div className="max-w-xs mx-auto space-y-3">
-          <h3 className="text-sm font-bold text-zinc-400">No posts yet</h3>
+          <h3 className="text-sm font-bold text-zinc-400">
+            {tabContents[activeTab]?.title}
+          </h3>
           <p className="text-xs text-zinc-600">
-            When you create posts, they'll show up here for others to see.
+            {tabContents[activeTab]?.desc}
           </p>
         </div>
       </div>

@@ -1,15 +1,8 @@
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/features/auth/useAuth";
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import {
-  Bell,
-  Home,
-  LogOut,
-  MessageSquare,
-  Search,
-  Settings,
-  User
-} from "lucide-react";
+import { Bell, LogOut, Search } from "lucide-react";
+import { navItems, type NavItem } from "@/mock";
 import ActiveConnections from "./ActiveConnections";
 import TrendingNow from "./TrendingNow";
 
@@ -21,18 +14,6 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-
-  const navItems: Array<{
-    path: string;
-    icon: React.ComponentType<{ className?: string }>;
-    label: string;
-    badge?: string;
-  }> = [
-    { path: "/", icon: Home, label: "Home" },
-    { path: "/chat", icon: MessageSquare, label: "Messages", badge: "12" },
-    { path: "/profile", icon: User, label: "Profile" },
-    { path: "/settings", icon: Settings, label: "Settings" }
-  ];
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -79,25 +60,41 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
         <aside className="flex w-64 flex-col justify-between">
           <div className="glass-mac rounded-2xl p-3 space-y-6">
             <nav className="space-y-1">
-              {navItems.map((item) => {
+              {navItems.map((item: NavItem) => {
                 const Icon = item.icon;
                 const active = isActive(item.path);
                 return (
                   <button
                     key={item.path}
                     onClick={() => navigate(item.path)}
-                    className={`w-full flex items-center justify-between rounded-xl px-4 py-3 text-sm font-medium transition ${
+                    className={`w-full flex items-center justify-between rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200 ${
                       active
-                        ? "bg-white/5 text-white border-l-2 border-electric-blue"
+                        ? "bg-linear-to-r from-electric-blue/15 via-electric-blue/8 to-transparent text-white shadow-[inset_0_0_20px_rgba(59,130,246,0.06)]"
                         : "text-zinc-400 hover:bg-white/5 hover:text-white"
                     }`}
                   >
                     <div className="flex items-center gap-4">
-                      <Icon className={`h-4 w-4 ${active ? "text-electric-blue" : ""}`} />
-                      {item.label}
+                      <div
+                        className={`flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-200 ${
+                          active
+                            ? "bg-electric-blue/20 text-electric-blue shadow-[0_0_12px_rgba(59,130,246,0.25)]"
+                            : "text-zinc-500"
+                        }`}
+                      >
+                        <Icon className="h-4 w-4" />
+                      </div>
+                      <span className={active ? "font-semibold" : ""}>
+                        {item.label}
+                      </span>
                     </div>
                     {item.badge && (
-                      <span className="rounded-full bg-neon-pink/20 px-2 py-0.5 text-xs font-bold text-neon-pink">
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-xs font-bold ${
+                          active
+                            ? "bg-neon-pink text-white shadow-[0_0_8px_rgba(255,0,127,0.4)]"
+                            : "bg-neon-pink/20 text-neon-pink"
+                        }`}
+                      >
                         {item.badge}
                       </span>
                     )}

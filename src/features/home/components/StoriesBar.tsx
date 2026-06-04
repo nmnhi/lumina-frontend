@@ -8,7 +8,8 @@ import {
   TooltipContent,
   TooltipTrigger
 } from "@/components/ui/tooltip";
-import { mockStories } from "@/mock";
+import { mockStories } from "@/features/home/mock/stories";
+import StoryViewer from "./StoryViewer";
 
 const CURRENT_USER_ID = "me";
 
@@ -26,6 +27,20 @@ export default function StoriesBar() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerIndex, setViewerIndex] = useState(0);
+
+  /** Only non-"Your Story" items are viewable */
+  const viewableStories = mockStories.filter(
+    (s) => s.author.id !== CURRENT_USER_ID
+  );
+
+  const openStory = (storyId: string) => {
+    const idx = viewableStories.findIndex((s) => s.id === storyId);
+    if (idx === -1) return;
+    setViewerIndex(idx);
+    setViewerOpen(true);
+  };
 
   const checkScroll = () => {
     const el = scrollRef.current;
@@ -50,7 +65,7 @@ export default function StoriesBar() {
   };
 
   return (
-    <div className="relative group/stories">
+    <div className="relative group/stories mx-8">
       {canScrollLeft && (
         <Tooltip>
           <TooltipTrigger asChild>
@@ -58,7 +73,7 @@ export default function StoriesBar() {
               variant="ghost"
               size="icon"
               onClick={() => scroll("left")}
-              className="absolute -left-3 top-1/2 -translate-y-1/2 z-20 h-8 w-8 rounded-full bg-[#09090b] border border-white/10 text-zinc-400 hover:text-white hover:border-white/20 opacity-0 group-hover/stories:opacity-100"
+              className="absolute -left-1 top-1/2 -translate-y-1/2 z-20 h-8 w-8 rounded-full bg-[#09090b] border border-white/10 text-zinc-400 hover:text-white hover:border-white/20 opacity-0 group-hover/stories:opacity-100"
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
@@ -73,7 +88,7 @@ export default function StoriesBar() {
               variant="ghost"
               size="icon"
               onClick={() => scroll("right")}
-              className="absolute -right-3 top-1/2 -translate-y-1/2 z-20 h-8 w-8 rounded-full bg-[#09090b] border border-white/10 text-zinc-400 hover:text-white hover:border-white/20 opacity-0 group-hover/stories:opacity-100"
+              className="absolute -right-1 top-1/2 -translate-y-1/2 z-20 h-8 w-8 rounded-full bg-[#09090b] border border-white/10 text-zinc-400 hover:text-white hover:border-white/20 opacity-0 group-hover/stories:opacity-100"
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
@@ -90,7 +105,11 @@ export default function StoriesBar() {
           const isYou = story.author.id === CURRENT_USER_ID;
           const initials = getInitials(story.author.displayName);
           return (
-            <button key={story.id} className="shrink-0 group relative w-[118px] snap-start">
+            <button
+              key={story.id}
+              className="shrink-0 group relative w-[118px] snap-start outline-none focus:outline-none"
+              onClick={() => !isYou && openStory(story.id)}
+            >
               <div
                 className={`relative h-[190px] w-full rounded-2xl overflow-hidden ${
                   isYou ? "" : "p-[2px] bg-linear-to-br from-electric-blue via-neon-pink to-cyber-purple"
@@ -150,6 +169,13 @@ export default function StoriesBar() {
           );
         })}
       </div>
+
+      <StoryViewer
+        stories={viewableStories}
+        initialIndex={viewerIndex}
+        isOpen={viewerOpen}
+        onClose={() => setViewerOpen(false)}
+      />
     </div>
   );
 }
