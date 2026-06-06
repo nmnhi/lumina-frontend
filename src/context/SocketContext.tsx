@@ -6,7 +6,7 @@ import {
   type ReactNode
 } from "react";
 import { Socket, io } from "socket.io-client";
-import { AuthContext } from "./AuthContext";
+import { AuthContext } from "@/features/auth/AuthContext";
 
 // 1. ĐỊNH NGHĨA KIỂU DỮ LIỆU ĐẦU RA CỦA SOCKET CONTEXT
 interface SocketContextType {

@@ -3,9 +3,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Play,
-  Pause,
-  Volume2,
-  VolumeX,
   X
 } from "lucide-react";
 
@@ -41,24 +38,20 @@ export default function MediaLightbox({
   onClose
 }: MediaLightboxProps) {
   const [index, setIndex] = useState(initialIndex);
-  const [muted, setMuted] = useState(true);
-  const [paused, setPaused] = useState(false);
+  const [muted] = useState(true);
 
   useEffect(() => {
     if (isOpen) {
       setIndex(initialIndex);
-      setPaused(false);
     }
   }, [isOpen, initialIndex]);
 
   const goPrev = useCallback(() => {
     setIndex((i) => (i - 1 + urls.length) % urls.length);
-    setPaused(false);
   }, [urls.length]);
 
   const goNext = useCallback(() => {
     setIndex((i) => (i + 1) % urls.length);
-    setPaused(false);
   }, [urls.length]);
 
   useEffect(() => {
@@ -158,30 +151,6 @@ export default function MediaLightbox({
                 playsInline
                 className="max-w-[92vw] max-h-[88vh] rounded-lg shadow-2xl"
               />
-              <div className="absolute bottom-4 right-4 flex gap-2 z-20">
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => setPaused((p) => !p)}
-                  className="h-9 w-9 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-sm text-white border-0"
-                  aria-label={paused ? "Phát" : "Tạm dừng"}
-                >
-                  {paused ? (
-                    <Play className="h-4 w-4 ml-0.5" />
-                  ) : (
-                    <Pause className="h-4 w-4" />
-                  )}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => setMuted((m) => !m)}
-                  className="h-9 w-9 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-sm text-white border-0"
-                  aria-label={muted ? "Bật âm thanh" : "Tắt âm thanh"}
-                >
-                  {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-                </Button>
-              </div>
             </div>
           ) : (
             <img
@@ -197,11 +166,12 @@ export default function MediaLightbox({
         {urls.length > 1 && (
           <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex gap-2 max-w-[92vw] overflow-x-auto px-2 py-1 z-20">
             {urls.map((u, i) => (
-              <button
+              <Button
                 key={u + i}
+                variant="ghost"
+                size="icon"
                 onClick={() => {
                   setIndex(i);
-                  setPaused(false);
                 }}
                 className={cn(
                   "shrink-0 h-12 w-12 rounded-md overflow-hidden border-2 transition",
@@ -218,7 +188,7 @@ export default function MediaLightbox({
                 ) : (
                   <img src={u} alt="" className="h-full w-full object-cover" />
                 )}
-              </button>
+              </Button>
             ))}
           </div>
         )}

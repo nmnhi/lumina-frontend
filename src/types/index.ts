@@ -20,6 +20,9 @@ export interface User {
   stories?: Story[];
   comments?: Comment[];
   likes?: Like[];
+
+  // Extra fields from API responses
+  isFollowing?: boolean;
 }
 
 // 📄 Post model
@@ -29,14 +32,18 @@ export interface Post {
   media?: any | null;         // Json — array of media objects or string URLs
   isSponsored: boolean;
   authorId: string;
+  originalPostId?: string | null;
   createdAt: string;
   updatedAt: string;
 
   author: Pick<User, "id" | "username" | "displayName" | "avatarUrl">;
+  originalPost?: Post | null;
   _count?: {
     comments: number;
     likes: number;
+    sharedPosts: number;
   };
+  isLiked?: boolean;
   comments?: Comment[];
   likes?: Like[];
 }
@@ -102,6 +109,7 @@ export interface Conversation {
   // Helper: the other user (not the current one)
   partner?: Pick<User, "id" | "username" | "displayName" | "avatarUrl">;
   lastMessage?: Pick<Message, "content" | "createdAt"> | null;
+  unreadCount?: number;
 }
 
 // ✉️ Message model

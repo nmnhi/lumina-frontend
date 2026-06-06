@@ -1,7 +1,11 @@
 import background from "@/assets/images/background.png";
+import { registerApi } from "@/features/auth/api/auth";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { ArrowRight, Eye, EyeOff } from "lucide-react";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -14,15 +18,44 @@ export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  /** Derive a username from the email (part before @) */
+  const deriveUsername = (email: string) => email.split("@")[0].toLowerCase();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!fullName || !email || !password || !confirmPassword) return;
-    if (password !== confirmPassword) return;
+
+    if (password !== confirmPassword) {
+      toast.error("Mật khẩu xác nhận không khớp!");
+      return;
+    }
+
+    if (password.length < 6) {
+      toast.error("Mật khẩu phải có ít nhất 6 ký tự!");
+      return;
+    }
 
     try {
       setIsSubmitting(true);
-    } catch (error) {
-      console.error(error);
+
+      const username = deriveUsername(email);
+
+      await registerApi({
+        email,
+        password,
+        username,
+        displayName: fullName,
+      });
+
+      // Register thành công → tự động đăng nhập
+      toast.success("Đăng ký tài khoản thành công!");
+
+      // Chuyển hướng sang trang login để user đăng nhập
+      navigate("/login");
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.message || "Đăng ký thất bại. Vui lòng thử lại.";
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -89,13 +122,13 @@ export default function Register() {
                 <label className="text-sm font-semibold tracking-wide text-zinc-300">
                   Full Name
                 </label>
-                <input
+                <Input
                   type="text"
                   required
                   placeholder="John Doe"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  className="w-full rounded-xl bg-white/3 border border-white/10 py-3.5 px-4 text-base text-zinc-100 placeholder-zinc-600 outline-none transition focus:border-white/20 focus:bg-white/6"
+                  className="h-auto rounded-xl bg-white/3 border-white/10 py-3.5 px-4 text-base text-zinc-100 placeholder-zinc-600 transition focus:border-white/20 focus:bg-white/6 dark:bg-transparent dark:disabled:bg-transparent"
                 />
               </div>
 
@@ -104,13 +137,13 @@ export default function Register() {
                 <label className="text-sm font-semibold tracking-wide text-zinc-300">
                   Email Address
                 </label>
-                <input
+                <Input
                   type="email"
                   required
                   placeholder="name@domain.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full rounded-xl bg-white/3 border border-white/10 py-3.5 px-4 text-base text-zinc-100 placeholder-zinc-600 outline-none transition focus:border-white/20 focus:bg-white/6"
+                  className="h-auto rounded-xl bg-white/3 border-white/10 py-3.5 px-4 text-base text-zinc-100 placeholder-zinc-600 transition focus:border-white/20 focus:bg-white/6 dark:bg-transparent dark:disabled:bg-transparent"
                 />
               </div>
 
@@ -121,25 +154,27 @@ export default function Register() {
                     Password
                   </label>
                   <div className="relative">
-                    <input
+                    <Input
                       type={showPassword ? "text" : "password"}
                       required
                       placeholder="••••••••"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full rounded-xl bg-white/3 border border-white/10 py-3.5 pl-4 pr-10 text-base text-zinc-100 placeholder-zinc-600 outline-none transition focus:border-white/20 focus:bg-white/6"
+                      className="h-auto rounded-xl bg-white/3 border-white/10 py-3.5 pl-4 pr-10 text-base text-zinc-100 placeholder-zinc-600 transition focus:border-white/20 focus:bg-white/6 dark:bg-transparent dark:disabled:bg-transparent"
                     />
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
+                      size="icon"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition"
+                      className="absolute right-1 top-1/2 -translate-y-1/2 size-auto p-2 text-zinc-500 hover:text-zinc-300 hover:bg-transparent"
                     >
                       {showPassword ? (
                         <EyeOff className="h-4 w-4" />
                       ) : (
                         <Eye className="h-4 w-4" />
                       )}
-                    </button>
+                    </Button>
                   </div>
                 </div>
 
@@ -147,25 +182,25 @@ export default function Register() {
                   <label className="text-sm font-semibold tracking-wide text-zinc-300">
                     Confirm Password
                   </label>
-                  <input
+                  <Input
                     type={showPassword ? "text" : "password"}
                     required
                     placeholder="••••••••"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full rounded-xl bg-white/3 border border-white/10 py-3.5 px-4 text-base text-zinc-100 placeholder-zinc-600 outline-none transition focus:border-white/20 focus:bg-white/6"
+                    className="h-auto rounded-xl bg-white/3 border-white/10 py-3.5 px-4 text-base text-zinc-100 placeholder-zinc-600 transition focus:border-white/20 focus:bg-white/6 dark:bg-transparent dark:disabled:bg-transparent"
                   />
                 </div>
               </div>
 
-              <button
+              <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="btn-lumina w-full flex items-center justify-center gap-2 rounded-xl bg-linear-to-r from-electric-blue via-neon-pink to-cyber-purple py-4 text-base font-bold text-white shadow-lg disabled:opacity-50 mt-4 cursor-pointer"
+                className="btn-lumina w-full flex items-center justify-center gap-2 rounded-xl bg-linear-to-r from-electric-blue via-neon-pink to-cyber-purple py-4 text-base font-bold text-white shadow-lg disabled:opacity-50 mt-4 h-auto cursor-pointer hover:opacity-90"
               >
                 <span>{isSubmitting ? "Creating..." : "Create Account"}</span>
                 {!isSubmitting && <ArrowRight className="h-5 w-5" />}
-              </button>
+              </Button>
             </form>
 
             {/* DIVIDER */}
@@ -177,7 +212,11 @@ export default function Register() {
                 </span>
               </div>
 
-              <button className="flex text-white w-full items-center justify-center gap-3 rounded-xl border border-white/10 bg-white/2 py-3.5 text-base font-medium hover:bg-white/[0.07] transition cursor-pointer">
+              <Button
+                variant="outline"
+                type="button"
+                className="flex w-full items-center justify-center gap-3 rounded-xl border-white/10 bg-white/2 py-3.5 text-base font-medium text-white hover:bg-white/[0.07] h-auto cursor-pointer"
+              >
                 <svg className="h-5 w-5" viewBox="0 0 24 24">
                   <path
                     fill="currentColor"
@@ -197,19 +236,20 @@ export default function Register() {
                   />
                 </svg>
                 <span>Google</span>
-              </button>
+              </Button>
             </div>
 
             {/* FOOTER SWITCH */}
             <p className="text-center text-sm text-zinc-400 pt-1">
               Already have an account?{" "}
-              <button
+              <Button
+                variant="link"
                 type="button"
                 onClick={() => navigate("/login")}
-                className="font-semibold text-zinc-100 hover:text-electric-blue transition cursor-pointer underline underline-offset-4"
+                className="font-semibold text-zinc-100 hover:text-electric-blue transition cursor-pointer underline underline-offset-4 h-auto p-0"
               >
                 Sign In
-              </button>
+              </Button>
             </p>
           </div>
 

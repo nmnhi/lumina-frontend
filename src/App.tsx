@@ -1,20 +1,22 @@
 import { MainLayout } from "@/components/shared/MainLayout";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { useAuth } from "@/features/auth/useAuth";
+import { AuthProvider } from "@/features/auth/AuthContext";
 import Login from "@/features/auth/page/Login";
+import Register from "@/features/auth/page/Register";
+import { useAuth } from "@/features/auth/useAuth";
+import Chat from "@/features/chat/page/Chat";
+import Home from "@/features/home/page/Home";
+import Profile from "@/features/profile/page/Profile";
+import Settings from "@/features/settings/page/Settings";
 import {
   Navigate,
   Route,
   BrowserRouter as Router,
   Routes
 } from "react-router-dom";
-import { AuthProvider } from "@/features/auth/AuthContext";
 import { SocketProvider } from "./context/SocketContext";
-import Register from "@/features/auth/page/Register";
-import Home from "@/features/home/page/Home";
-import Chat from "@/features/chat/page/Chat";
-import Profile from "@/features/profile/page/Profile";
+import { UnreadProvider } from "./context/UnreadContext";
 
 // 🛡️ BỘ LỌC BẢO VỆ CHẶT CHẼ: BẮT BUỘC ĐĂNG NHẬP (PROTECTED ROUTE)
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -58,31 +60,55 @@ function AppContent() {
         <Route
           path="/"
           element={
-            // <ProtectedRoute>
+            <ProtectedRoute>
               <MainLayout>
                 <Home />
               </MainLayout>
-            // </ProtectedRoute>
+              //{" "}
+            </ProtectedRoute>
           }
         />
         <Route
           path="/chat"
           element={
-            // <ProtectedRoute>
+            <ProtectedRoute>
               <MainLayout>
                 <Chat />
               </MainLayout>
-            // </ProtectedRoute>
+              //{" "}
+            </ProtectedRoute>
           }
         />
         <Route
           path="/profile"
           element={
-            // <ProtectedRoute>
+            <ProtectedRoute>
               <MainLayout>
                 <Profile />
               </MainLayout>
-            // </ProtectedRoute>
+              //{" "}
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile/:username"
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <Profile />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <Settings />
+              </MainLayout>
+              //{" "}
+            </ProtectedRoute>
           }
         />
 
@@ -118,10 +144,12 @@ export default function App() {
   return (
     <AuthProvider>
       <SocketProvider>
+        <UnreadProvider>
         <TooltipProvider delayDuration={200}>
           <AppContent />
-          <Toaster position="top-center" richColors closeButton />
+          <Toaster position="top-right" richColors closeButton />
         </TooltipProvider>
+        </UnreadProvider>
       </SocketProvider>
     </AuthProvider>
   );

@@ -1,15 +1,46 @@
 import api from "@/services/api";
 import type { User } from "@/types";
 
-interface LoginResponse {
-  token: string;
+/** Shape returned by the backend's sendResponse wrapper */
+interface ApiResponse<T> {
+  status: "success" | "error";
+  message: string;
+  data: T;
+}
+
+/** Login: backend returns { user, accessToken } inside data */
+interface LoginResult {
   user: User;
+  accessToken: string;
+}
+
+/** Payload for the register endpoint */
+export interface RegisterData {
+  email: string;
+  password: string;
+  username: string;
+  displayName: string;
 }
 
 export const loginApi = async (email: string, password: string) => {
-  const response = await api.post<LoginResponse>("/auth/login", {
+  const response = await api.post<ApiResponse<LoginResult>>("/auth/login", {
     email,
     password,
   });
+  return response.data;
+};
+
+export const registerApi = async (data: RegisterData) => {
+  const response = await api.post<ApiResponse<User>>("/auth/register", data);
+  return response.data;
+};
+
+export interface ChangePasswordData {
+  oldPassword: string;
+  newPassword: string;
+}
+
+export const changePasswordApi = async (data: ChangePasswordData) => {
+  const response = await api.patch<ApiResponse<null>>("/auth/change-password", data);
   return response.data;
 };

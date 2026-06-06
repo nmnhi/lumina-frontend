@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/features/auth/useAuth";
+import { usePostRefresh } from "@/features/home/context/PostRefreshContext";
+import { createPostApi } from "@/features/home/api/post";
 
 const FALLBACK_AVATAR =
   "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80";
@@ -22,6 +24,7 @@ interface PreviewItem {
 
 export default function CreatePostBox() {
   const { user } = useAuth();
+  const { triggerRefresh } = usePostRefresh();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
@@ -74,12 +77,18 @@ export default function CreatePostBox() {
 
     try {
       setSubmitting(true);
-      // TODO: thay bằng createPostApi thật khi backend ready
-      await new Promise((r) => setTimeout(r, 800));
+
+      // Build FormData for multipart upload
+      const formData = new FormData();
+      if (text.trim()) formData.append("bodyText", text.trim());
+      previews.forEach((p) => formData.append("files", p.file));
+
+      await createPostApi(formData);
 
       setText("");
       previews.forEach((p) => URL.revokeObjectURL(p.url));
       setPreviews([]);
+      triggerRefresh();
       toast.success("Đã đăng bài thành công ✨");
     } catch {
       toast.error("Đăng bài thất bại, vui lòng thử lại.");
@@ -104,7 +113,7 @@ export default function CreatePostBox() {
             onChange={(e) => setText(e.target.value)}
             disabled={submitting}
             placeholder={`What's on your mind, ${firstName}?`}
-            className="h-11 rounded-full border-white/10 bg-white/[0.03] px-5 text-sm text-zinc-200 placeholder:text-zinc-500 focus-visible:border-white/20 focus-visible:bg-white/[0.05] focus-visible:ring-0"
+            className="h-11 rounded-full border-white/10 bg-white/3 px-5 text-sm text-zinc-200 placeholder:text-zinc-500 focus-visible:border-white/20 focus-visible:bg-white/5 focus-visible:ring-0"
           />
         </div>
       </div>
@@ -179,7 +188,7 @@ export default function CreatePostBox() {
         <Button
           onClick={handlePost}
           disabled={submitting}
-          className="rounded-full bg-gradient-to-r from-cyber-purple to-neon-pink px-6 h-9 text-sm font-bold text-white shadow-lg shadow-cyber-purple/30 hover:brightness-110 hover:shadow-cyber-purple/50 border-0 transition"
+          className="rounded-full bg-linear-to-r from-cyber-purple to-neon-pink px-6 h-9 text-sm font-bold text-white shadow-lg shadow-cyber-purple/30 hover:brightness-110 hover:shadow-cyber-purple/50 border-0 transition"
         >
           {submitting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
           {submitting ? "Posting..." : "Post"}

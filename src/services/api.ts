@@ -29,15 +29,15 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Nếu Backend trả về lỗi 401 (Unauthorized) - Token hết hạn hoặc bất hợp lệ
+    // Chỉ redirect về login khi Backend trả về 401 (Unauthorized) — token hết hạn/không hợp lệ
     if (error.response && error.response.status === 401) {
       localStorage.removeItem("lumina_token");
       localStorage.removeItem("lumina_user");
-    }
 
-    // Kiểm tra nếu không phải đang ở trang login thì sút user về trang login
-    if (!window.location.pathname.includes("/login")) {
-      window.location.href = "/login";
+      // Tránh loop redirect khi đã ở trang login
+      if (!window.location.pathname.includes("/login")) {
+        window.location.href = "/login";
+      }
     }
 
     return Promise.reject(error);

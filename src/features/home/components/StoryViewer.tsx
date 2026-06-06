@@ -2,21 +2,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 import { timeAgo } from "@/lib/utils";
+import type { Story } from "@/types";
 
 const STORY_DURATION_MS = 5_000; // 5 seconds per story
-
-interface Story {
-  id: string;
-  mediaUrl: string;
-  author: {
-    id: string;
-    displayName: string;
-    username: string;
-    avatarUrl: string;
-  };
-  createdAt: string;
-}
+const VIDEO_EXT = /\.(mp4|webm|ogg|mov|m3u8)(\?|$)/i;
+const isVideoUrl = (url: string) => VIDEO_EXT.test(url);
 
 interface StoryViewerProps {
   stories: Story[];
@@ -162,11 +155,24 @@ export default function StoryViewer({
   const initials = getInitials(currentStory.author.displayName);
 
   return (
-    <div
-      className="fixed inset-0 z-100 flex items-center justify-center bg-black/90 backdrop-blur-sm"
-      role="dialog"
-      aria-label="Story viewer"
-    >
+    <Dialog open={isOpen} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent
+        showCloseButton={false}
+        className={cn(
+          "max-w-none w-screen h-screen max-h-screen sm:max-w-none sm:max-h-screen",
+          "p-0 bg-black/90 backdrop-blur-md border-0 ring-0",
+          "left-0 top-0 translate-x-0 translate-y-0 rounded-none"
+        )}
+      >
+        <DialogTitle className="sr-only">Story viewer</DialogTitle>
+        <div
+          className="relative w-full h-full flex items-center justify-center select-none"
+          onClick={handleBackdropClick}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          onMouseDown={handleMouseDown}
+          onMouseUp={handleMouseUp}
+        >
       {/* Close button */}
       <Button
         variant="ghost"
@@ -213,11 +219,6 @@ export default function StoryViewer({
       {/* Story card */}
       <div
         className="relative w-full max-w-[420px] h-[90vh] max-h-[780px] rounded-2xl overflow-hidden bg-black select-none"
-        onClick={handleBackdropClick}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-        onMouseDown={handleMouseDown}
-        onMouseUp={handleMouseUp}
       >
         {/* Progress bars */}
         <div className="absolute top-0 left-0 right-0 z-20 flex gap-1 px-3 pt-3">
@@ -262,18 +263,40 @@ export default function StoryViewer({
           </div>
         </div>
 
-        {/* Story image */}
-        <img
-          key={currentStory.id}
-          src={currentStory.mediaUrl}
-          alt={`Story by ${currentStory.author.displayName}`}
-          className="absolute inset-0 h-full w-full object-cover"
-          draggable={false}
-        />
+        {/* Story media (image or video) */}
+        {isVideoUrl(currentStory.mediaUrl) ? (
+          <video
+            key={currentStory.id}
+            src={currentStory.mediaUrl}
+            className="absolute inset-0 h-full w-full object-cover"
+            autoPlay
+            muted
+            loop
+            playsInline
+            onError={(e) => {
+              console.error("[StoryViewer] Failed to load video:", currentStory.mediaUrl);
+              (e.target as HTMLVideoElement).style.display = "none";
+            }}
+          />
+        ) : (
+          <img
+            key={currentStory.id}
+            src={currentStory.mediaUrl}
+            alt={`Story by ${currentStory.author.displayName}`}
+            className="absolute inset-0 h-full w-full object-cover"
+            draggable={false}
+            onError={(e) => {
+              console.error("[StoryViewer] Failed to load image:", currentStory.mediaUrl);
+              (e.target as HTMLImageElement).style.display = "none";
+            }}
+          />
+        )}
 
         {/* Gradient overlays */}
         <div className="absolute inset-0 bg-linear-to-b from-black/40 via-transparent to-black/40 pointer-events-none" />
       </div>
-    </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
