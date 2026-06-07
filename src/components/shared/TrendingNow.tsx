@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { getTrendingHashtagsApi } from "@/features/hashtags/api/hashtags";
 import { TrendItemSkeleton } from "./PostCardSkeleton";
 
@@ -30,15 +31,19 @@ export default function TrendingNow() {
           <p className="text-xs text-zinc-600">No trending topics yet.</p>
         ) : (
           trends.map((trend, index) => (
-            <div key={index} className="flex flex-col">
+            <Link
+              key={index}
+              to={`/hashtag/${encodeURIComponent(trend.name)}`}
+              className="flex flex-col hover:opacity-80 transition"
+            >
               <span className="text-[11px] text-zinc-500 font-medium">Technology • Trending</span>
-              <span className="text-sm font-bold text-zinc-200 hover:text-electric-blue cursor-pointer transition">
+              <span className="text-sm font-bold text-zinc-200 hover:text-electric-blue transition">
                 #{trend.name}
               </span>
               <span className="text-xs text-zinc-500 mt-0.5">
                 {trend._count?.posts ?? 0} {trend._count?.posts === 1 ? "post" : "posts"}
               </span>
-            </div>
+            </Link>
           ))
         )}
       </div>

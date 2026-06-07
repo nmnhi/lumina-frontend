@@ -1,7 +1,7 @@
-import { useState, useRef, useLayoutEffect, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Settings, Calendar, Loader2, ArrowLeft, UserX, UserPlus, UserCheck, MessageSquare } from "lucide-react";
+import { Settings, Calendar, ArrowLeft, UserX, UserPlus, UserCheck, MessageSquare } from "lucide-react";
 import { useAuth } from "@/features/auth/useAuth";
 import { getMeApi, getUserByUsernameApi, toggleFollowApi } from "@/features/profile/api/user";
 import { getMyPostsApi, getUserPostsApi } from "@/features/home/api/post";
@@ -9,10 +9,18 @@ import { getOrCreateConversationApi } from "@/features/chat/api/chat";
 import type { Post, User } from "@/types";
 import PostCard from "@/features/home/components/PostCard";
 import ProfileAvatarWithStory from "@/features/profile/components/ProfileAvatarWithStory";
+import MiniSpinner from "@/components/shared/MiniSpinner";
 import { ProfileSkeleton } from "@/components/shared/PostCardSkeleton";
+import SlidingTabs, { type SlidingTabItem } from "@/components/shared/SlidingTabs";
 import { toast } from "sonner";
 
-const mockTabs = ["Posts", "Likes", "Media"] as const;
+type ProfileTab = "Posts" | "Likes" | "Media";
+
+const PROFILE_TABS: ReadonlyArray<SlidingTabItem & { key: ProfileTab }> = [
+  { key: "Posts", label: "Posts" },
+  { key: "Likes", label: "Likes" },
+  { key: "Media", label: "Media" },
+] as const;
 
 export default function Profile() {
   const { username } = useParams<{ username: string }>();
@@ -22,10 +30,7 @@ export default function Profile() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<string>("Posts");
-  const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
-  const tabsRef = useRef<Map<string, HTMLButtonElement>>(new Map());
-  const tabsContainerRef = useRef<HTMLDivElement>(null);
+  const [activeTab, setActiveTab] = useState<ProfileTab>("Posts");
 
   const isOwnProfile = !username || username === authUser?.username;
   const [isFollowing, setIsFollowing] = useState(false);
@@ -58,30 +63,14 @@ export default function Profile() {
     }
   }, [profile?.id]);
 
-  // Move the sliding indicator to the active tab
-  useLayoutEffect(() => {
-    let raf2 = 0;
-    const measure = () => {
-      const container = tabsContainerRef.current;
-      const btn = tabsRef.current?.get(activeTab);
-      if (!container || !btn) return;
-      const containerRect = container.getBoundingClientRect();
-      const btnRect = btn.getBoundingClientRect();
-      setIndicatorStyle({
-        left: btnRect.left - containerRect.left,
-        width: btnRect.width,
-      });
-    };
-    const raf1 = requestAnimationFrame(() => {
-      raf2 = requestAnimationFrame(measure);
-    });
-    window.addEventListener("resize", measure);
-    return () => {
-      cancelAnimationFrame(raf1);
-      cancelAnimationFrame(raf2);
-      window.removeEventListener("resize", measure);
-    };
-  }, [activeTab, posts.length]);
+  // Compute per-tab counts to display as badges
+  const tabCounts = useMemo(() => {
+    const mediaCount = posts.filter((p) => {
+      const media = p.media;
+      return Array.isArray(media) ? media.length > 0 : typeof media === "string" ? !!media : false;
+    }).length;
+    return { Posts: posts.length, Likes: 0, Media: mediaCount };
+  }, [posts]);
 
   // Fetch data based on whether we're viewing own profile or someone else's
   const fetchProfile = useCallback(async () => {
@@ -197,7 +186,7 @@ export default function Profile() {
                   }`}
                 >
                   {followLoading ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    <MiniSpinner size={14} />
                   ) : isFollowing ? (
                     <UserCheck className="h-3.5 w-3.5" />
                   ) : (
@@ -213,7 +202,7 @@ export default function Profile() {
                   className="flex items-center gap-2 rounded-xl border-white/10 px-4 py-2 text-xs font-medium text-zinc-300 hover:bg-white/5 h-auto"
                 >
                   {msgLoading ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    <MiniSpinner size={14} />
                   ) : (
                     <MessageSquare className="h-3.5 w-3.5" />
                   )}
@@ -246,52 +235,21 @@ export default function Profile() {
             </div>
 
             <div className="flex items-center gap-4 text-sm flex-wrap">
-              <span className="text-zinc-200 font-bold">1,247</span>
+              <span className="text-zinc-200 font-bold">{currentUser?._count?.following?.toLocaleString() ?? "—"}</span>
               <span className="text-zinc-500 text-xs">Following</span>
-              <span className="text-zinc-200 font-bold">8,432</span>
+              <span className="text-zinc-200 font-bold">{currentUser?._count?.followers?.toLocaleString() ?? "—"}</span>
               <span className="text-zinc-500 text-xs">Followers</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* TABS with sliding indicator */}
-      <div className="glass-mac rounded-2xl p-1 relative">
-        <div
-          className="absolute top-1 bottom-1 rounded-xl bg-linear-to-r from-electric-blue/20 via-electric-blue/10 to-transparent transition-all duration-300 ease-in-out"
-          style={{
-            left: `${indicatorStyle.left}px`,
-            width: `${indicatorStyle.width}px`,
-          }}
-        />
-
-        <div className="relative flex gap-1" ref={tabsContainerRef}>
-          {mockTabs.map((tab, idx) => {
-            const isActive = activeTab === tab;
-            return (
-              <Button
-                key={tab}
-                ref={(el) => {
-                  if (!tabsRef.current) tabsRef.current = new Map();
-                  if (el) tabsRef.current.set(tab, el);
-                }}
-                variant="ghost"
-                onClick={() => setActiveTab(tab)}
-                className={`flex-1 py-2.5 rounded-xl text-xs font-bold relative z-10 transition-colors duration-300 h-auto border-0 shadow-none ring-0 outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 ${
-                  isActive
-                    ? "text-white"
-                    : "text-zinc-500 hover:text-zinc-300"
-                }`}
-                style={{ boxShadow: "none" }}
-                tabIndex={0}
-                data-tab-index={idx}
-              >
-                {tab}
-              </Button>
-            );
-          })}
-        </div>
-      </div>
+      {/* TABS with sliding indicator (shared SlidingTabs component) */}
+      <SlidingTabs
+        tabs={PROFILE_TABS.map((t) => ({ key: t.key, label: t.label, badge: tabCounts[t.key] }))}
+        activeTab={activeTab}
+        onChange={setActiveTab}
+      />
 
       {/* TAB CONTENT */}
       <div

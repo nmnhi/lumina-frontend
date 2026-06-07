@@ -1,4 +1,4 @@
-import { Bell, Loader2 } from "lucide-react";
+import { Bell } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -10,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import MiniSpinner from "@/components/shared/MiniSpinner";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "./Switch";
 
@@ -168,7 +169,7 @@ export default function NotificationsDialog({
             disabled={submitting}
             className="btn-lumina rounded-full bg-linear-to-r from-electric-blue via-neon-pink to-cyber-purple px-6 h-9 text-sm font-bold text-white shadow-lg cursor-pointer hover:opacity-90"
           >
-            {submitting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+            {submitting && <MiniSpinner size={14} />}
             {submitting ? "Saving..." : "Save"}
           </Button>
         </div>

@@ -1,7 +1,6 @@
 import {
   Camera,
   Image as ImageIcon,
-  Loader2,
   Trash2,
   Upload,
   User,
@@ -18,6 +17,7 @@ import { toast } from "sonner";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import MiniSpinner from "@/components/shared/MiniSpinner";
 import {
   Dialog,
   DialogContent,
@@ -137,6 +137,7 @@ export default function EditProfileDialog({
       setSubmitting(true);
       await updateProfileApi({
         displayName: displayName.trim(),
+        username: username.trim(),
         bio: bio.trim() || undefined,
         avatarUrl: avatarUrl || undefined,
       });
@@ -314,7 +315,7 @@ export default function EditProfileDialog({
             disabled={submitting}
             className="btn-lumina rounded-full bg-linear-to-r from-electric-blue via-neon-pink to-cyber-purple px-6 h-9 text-sm font-bold text-white shadow-lg cursor-pointer hover:opacity-90"
           >
-            {submitting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+            {submitting && <MiniSpinner size={14} />}
             {submitting ? "Saving..." : "Save Changes"}
           </Button>
         </div>

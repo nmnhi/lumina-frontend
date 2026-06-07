@@ -1,9 +1,17 @@
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/features/auth/useAuth";
 import { PostRefreshProvider } from "@/features/home/context/PostRefreshContext";
 import { navItems, type NavItem } from "@/mock";
-import { Bell, LogOut, Search, Menu, X } from "lucide-react";
+import { Bell, Bookmark, LogOut, Search, Menu, X, User, Settings, ChevronUp } from "lucide-react";
 import { useUnread } from "@/context/UnreadContext";
 import { useSocket } from "@/hooks/useSocket";
 import React, { useEffect, useState } from "react";
@@ -17,15 +25,27 @@ interface MainLayoutProps {
   children: React.ReactNode;
 }
 
+const FALLBACK_AVATAR =
+  "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80";
+
 export const MainLayout = ({ children }: MainLayoutProps) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { socket } = useSocket();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const { unreadTotal, setUnreadTotal } = useUnread();
 
+  // Đồng bộ searchQuery với URL khi ở /explore
+  useEffect(() => {
+    if (location.pathname === "/explore") {
+      setSearchQuery(location.search ? new URLSearchParams(location.search).get("q") || "" : "");
+    }
+  }, [location.pathname, location.search]);
+
   const isActive = (path: string) => location.pathname === path;
+  const avatarUrl = user?.avatarUrl || FALLBACK_AVATAR;
 
   // Hàm helper: gọi API conversations và tính lại tổng unread
   const refreshUnread = () => {
@@ -113,35 +133,52 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   );
 
   const userCard = (
-    <div className="glass-mac flex items-center justify-between rounded-2xl p-4">
-      <div className="flex items-center gap-3">
-        <img
-          src={
-            user?.avatarUrl ||
-            "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80"
-          }
-          alt="Avatar"
-          className="h-10 w-10 rounded-full object-cover"
-        />
-        <div className="flex flex-col min-w-0">
-          <span className="truncate text-sm font-bold text-zinc-200">
-            {user?.displayName || "Alex Rivers"}
-          </span>
-          <span className="truncate text-xs text-zinc-500">
-            @{user?.username || "arivers"}
-          </span>
-        </div>
-      </div>
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={logout}
-        className="rounded-lg text-zinc-500 hover:text-red-400"
-        title="Đăng xuất"
-      >
-        <LogOut className="h-4 w-4" />
-      </Button>
-    </div>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          className="glass-mac flex w-full items-center justify-between rounded-2xl p-4 text-left transition-colors hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-electric-blue/50"
+          aria-label="User menu"
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <img
+              src={avatarUrl}
+              alt="Avatar"
+              className="h-10 w-10 shrink-0 rounded-full object-cover"
+            />
+            <div className="flex flex-col min-w-0">
+              <span className="truncate text-sm font-bold text-zinc-200">
+                {user?.displayName || "Alex Rivers"}
+              </span>
+              <span className="truncate text-xs text-zinc-500">
+                @{user?.username || "arivers"}
+              </span>
+            </div>
+          </div>
+          <ChevronUp className="h-4 w-4 shrink-0 text-zinc-500" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" side="top" className="w-56">
+        <DropdownMenuLabel>{user?.displayName || "Alex Rivers"}</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => navigate(`/${user?.username || ""}`)}>
+          <User />
+          <span>Trang cá nhân</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate("/settings")}>
+          <Settings />
+          <span>Cài đặt</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate("/bookmarks")}>
+          <Bookmark />
+          <span>Đã lưu</span>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem variant="destructive" onClick={logout}>
+          <LogOut />
+          <span>Đăng xuất</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 
   return (
@@ -165,33 +202,67 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
         </div>
 
         {/* SEARCH — hidden on mobile */}
-        <div className="relative w-full max-w-96 min-w-0 hidden md:block">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            const q = searchQuery.trim();
+            if (q) navigate(`/explore?q=${encodeURIComponent(q)}`);
+          }}
+          className="relative w-full max-w-96 min-w-0 hidden md:block"
+        >
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
           <Input
             type="text"
-            placeholder="Search experiences..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Tìm kiếm..."
             className="h-auto rounded-full bg-zinc-900/50 py-2 pl-10 pr-4 text-sm border-white/5 text-zinc-200 placeholder-zinc-500 transition focus:border-zinc-700 focus:bg-zinc-900 dark:bg-zinc-900/50"
           />
-        </div>
+        </form>
 
         {/* NOTIFICATION + AVATAR */}
         <div className="flex items-center gap-3 sm:gap-4">
           <Button
             variant="ghost"
             size="icon"
+            onClick={() => navigate("/notifications")}
             className="relative rounded-full text-zinc-400 hover:text-zinc-300"
+            aria-label="Notifications"
           >
             <Bell className="h-4 w-4" />
             <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-neon-pink"></span>
           </Button>
-          <img
-            src={
-              user?.avatarUrl ||
-              "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80"
-            }
-            alt="Me"
-            className="h-7 w-7 sm:h-8 sm:w-8 rounded-full border border-white/20 object-cover"
-          />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-electric-blue/50"
+                aria-label="User menu"
+              >
+                <img
+                  src={avatarUrl}
+                  alt="Me"
+                  className="h-7 w-7 sm:h-8 sm:w-8 rounded-full border border-white/20 object-cover transition-opacity hover:opacity-80"
+                />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>{user?.displayName || "Alex Rivers"}</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => navigate(`/${user?.username || ""}`)}>
+                <User />
+                <span>Trang cá nhân</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/settings")}>
+                <Settings />
+                <span>Cài đặt</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem variant="destructive" onClick={logout}>
+                <LogOut />
+                <span>Đăng xuất</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </header>
 

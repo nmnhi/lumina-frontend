@@ -164,12 +164,14 @@ export default function Login() {
                   <label className="text-sm font-semibold tracking-wide text-zinc-300">
                     Password
                   </label>
-                  <a
-                    href="#"
-                    className="text-sm text-cyber-purple hover:text-[#b366ff] font-medium transition"
+                  <Button
+                    variant="link"
+                    type="button"
+                    onClick={() => navigate("/forgot-password")}
+                    className="text-sm text-cyber-purple hover:text-[#b366ff] font-medium transition h-auto p-0"
                   >
                     Forgot Password?
-                  </a>
+                  </Button>
                 </div>
                 <div className="relative">
                   <Input

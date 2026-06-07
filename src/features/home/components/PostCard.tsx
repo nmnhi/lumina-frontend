@@ -1,10 +1,12 @@
 import {
   Heart,
   MessageSquare,
+  Repeat2,
   Share2,
   MoreHorizontal,
   Pencil,
   Trash2,
+  Bookmark,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
@@ -19,8 +21,11 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn, timeAgo } from "@/lib/utils";
+import HashtagMentionText from "@/components/shared/HashtagMentionText";
+import ReadMoreText from "@/components/shared/ReadMoreText";
 import { useAuth } from "@/features/auth/useAuth";
-import { toggleLikeApi } from "@/features/interactions/api/interactions";
+import { toggleLikeApi, sharePostApi } from "@/features/interactions/api/interactions";
+import { toggleBookmarkApi } from "@/features/bookmarks/api/bookmarks";
 import type { Post } from "@/types";
 import EditPostDialog from "./EditPostDialog";
 import DeletePostConfirmDialog from "./DeletePostConfirmDialog";
@@ -84,6 +89,9 @@ export default function PostCard({
   const [shareCount, setShareCount] = useState(post._count?.sharedPosts ?? 0);
   const [shared, setShared] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [reposting, setReposting] = useState(false);
+  const [bookmarked, setBookmarked] = useState(post.isBookmarked ?? false);
+  const [bookmarking, setBookmarking] = useState(false);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -133,6 +141,49 @@ export default function PostCard({
       return;
     }
     setShareDialogOpen(true);
+  };
+
+  const handleQuickRepost = async () => {
+    if (isOwner) {
+      toast.info("You can't repost your own post");
+      return;
+    }
+    if (reposting) return;
+    try {
+      setReposting(true);
+      const res = await sharePostApi(post.id, "");
+      if (res.data.shared) {
+        setShared(true);
+        setShareCount((c) => c + 1);
+        toast.success("Reposted!");
+      } else if (res.data.alreadyShared) {
+        setShared(true);
+        toast.info("Already reposted");
+      }
+    } catch (error: any) {
+      if (error?.response?.status !== 400) {
+        toast.error("Failed to repost.");
+      }
+    } finally {
+      setReposting(false);
+    }
+  };
+
+  const handleBookmark = async () => {
+    if (bookmarking) return;
+    setBookmarking(true);
+    // Optimistic update
+    const prev = bookmarked;
+    setBookmarked(!prev);
+    try {
+      await toggleBookmarkApi(post.id);
+    } catch {
+      // Revert on failure
+      setBookmarked(prev);
+      toast.error("Không thể lưu bài viết, vui lòng thử lại.");
+    } finally {
+      setBookmarking(false);
+    }
   };
 
   return (
@@ -220,9 +271,7 @@ export default function PostCard({
         {/* BODY */}
         {post.bodyText && (
           <div className="px-5 pb-3">
-            <p className="text-sm text-zinc-300 leading-relaxed whitespace-pre-line">
-              {post.bodyText}
-            </p>
+            <ReadMoreText text={post.bodyText} />
           </div>
         )}
 
@@ -245,9 +294,10 @@ export default function PostCard({
             </Link>
             {post.originalPost.bodyText && (
               <div className="px-4 pb-2">
-                <p className="text-xs text-zinc-400 leading-relaxed line-clamp-3 whitespace-pre-line">
-                  {post.originalPost.bodyText}
-                </p>
+                <HashtagMentionText
+                  text={post.originalPost.bodyText}
+                  className="text-xs text-zinc-400 leading-relaxed line-clamp-3 whitespace-pre-line"
+                />
               </div>
             )}
             {origMedia.length > 0 && (
@@ -282,21 +332,37 @@ export default function PostCard({
             hoverColor="hover:text-neon-pink"
             onClick={handleLike}
             disabled={liking}
+            tooltip={liked ? "Bỏ thích" : "Thích"}
           />
           <ActionButton
             label={commentCount.toString()}
             icon={<MessageSquare className="h-5 w-5" />}
             hoverColor="hover:text-electric-blue"
             onClick={() => setCommentOpen(true)}
+            tooltip="Bình luận"
           />
-          <ActionButton
-            label={shareCount.toString()}
-            icon={<Share2 className={`h-5 w-5 ${shared ? "fill-cyber-purple text-cyber-purple" : ""}`} />}
-            selected={shared}
-            hoverColor="hover:text-cyber-purple"
-            onClick={handleShare}
-            disabled={false}
-          />
+          <div className="relative">
+            <ActionButton
+              label={shareCount.toString()}
+              icon={<Repeat2 className={`h-5 w-5 ${shared ? "fill-cyber-purple text-cyber-purple" : ""}`} />}
+              selected={shared}
+              hoverColor="hover:text-cyber-purple"
+              onClick={() => setShareDialogOpen(true)}
+              disabled={false}
+              tooltip="Chia sẻ"
+            />
+          </div>
+          <div className="ml-auto">
+            <ActionButton
+              label=""
+              icon={<Bookmark className={`h-5 w-5 ${bookmarked ? "fill-electric-blue text-electric-blue" : ""}`} />}
+              selected={bookmarked}
+              hoverColor="hover:text-electric-blue"
+              onClick={handleBookmark}
+              disabled={bookmarking}
+              tooltip={bookmarked ? "Bỏ lưu" : "Lưu bài viết"}
+            />
+          </div>
         </div>
       </article>
 
@@ -361,10 +427,11 @@ interface ActionButtonProps {
   selected?: boolean;
   onClick?: () => void;
   disabled?: boolean;
+  tooltip?: string;
 }
 
-function ActionButton({ label, icon, hoverColor, selected, onClick, disabled }: ActionButtonProps) {
-  return (
+function ActionButton({ label, icon, hoverColor, selected, onClick, disabled, tooltip }: ActionButtonProps) {
+  const button = (
     <Button
       variant="ghost"
       onClick={onClick}
@@ -380,6 +447,16 @@ function ActionButton({ label, icon, hoverColor, selected, onClick, disabled }: 
       {icon}
       {label}
     </Button>
+  );
+
+  if (!tooltip) return button;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{button}</TooltipTrigger>
+      <TooltipContent side="bottom">
+        <p>{tooltip}</p>
+      </TooltipContent>
+    </Tooltip>
   );
 }
 

@@ -1,4 +1,4 @@
-import { Loader2, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -11,6 +11,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import MiniSpinner from "@/components/shared/MiniSpinner";
 import { Separator } from "@/components/ui/separator";
 import { updatePostApi } from "@/features/home/api/post";
 import type { Post } from "@/types";
@@ -126,7 +127,7 @@ export default function EditPostDialog({
             disabled={submitting || text.trim() === (post.bodyText ?? "")}
             className="btn-lumina rounded-full bg-linear-to-r from-electric-blue via-neon-pink to-cyber-purple px-6 h-9 text-sm font-bold text-white shadow-lg cursor-pointer hover:opacity-90"
           >
-            {submitting && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
+            {submitting && <MiniSpinner size={14} className="mr-1" />}
             {submitting ? "Saving..." : "Save"}
           </Button>
         </div>

@@ -8,7 +8,6 @@ import {
   HelpCircle,
   Info,
   Lock,
-  LogOut,
   Mail,
   Palette,
   Shield,
@@ -23,6 +22,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/features/auth/useAuth";
+import { deleteAccountApi } from "@/features/profile/api/deleteAccount";
 import ChangePasswordDialog from "../components/ChangePasswordDialog";
 import ConfirmDialog from "../components/ConfirmDialog";
 import EditProfileDialog from "../components/EditProfileDialog";
@@ -46,7 +46,6 @@ export default function Settings() {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [appearanceOpen, setAppearanceOpen] = useState(false);
   const [storageOpen, setStorageOpen] = useState(false);
-  const [signOutOpen, setSignOutOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   const avatarUrl = user?.avatarUrl || FALLBACK_AVATAR;
@@ -58,36 +57,27 @@ export default function Settings() {
     .join("")
     .toUpperCase();
 
-  const handleSignOut = async () => {
-    logout();
-    navigate("/login");
-  };
-
   const handleDeleteAccount = async () => {
-    // TODO: thay bằng deleteAccountApi khi backend sẵn sàng
-    toast.error("Tính năng xoá tài khoản chưa khả dụng.");
+    try {
+      await deleteAccountApi();
+      logout();
+      navigate("/login");
+      toast.success("Tài khoản đã được xóa vĩnh viễn.");
+    } catch {
+      toast.error("Xóa tài khoản thất bại. Vui lòng thử lại.");
+    }
   };
 
   return (
     <div className="max-w-3xl mx-auto p-4 sm:p-6 space-y-6">
       {/* ─── HEADER ─── */}
-      <header className="flex flex-col sm:flex-row items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-            Settings
-          </h1>
-          <p className="text-sm text-zinc-500 mt-1">
-            Manage your account, privacy, and preferences.
-          </p>
-        </div>
-        <Button
-          variant="outline"
-          onClick={() => setSignOutOpen(true)}
-          className="border-white/10 bg-white/3 text-zinc-300 hover:bg-white/5 hover:text-zinc-100"
-        >
-          <LogOut className="h-4 w-4 mr-2" />
-          Sign Out
-        </Button>
+      <header>
+        <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+          Settings
+        </h1>
+        <p className="text-sm text-zinc-500 mt-1">
+          Manage your account, privacy, and preferences.
+        </p>
       </header>
 
       {/* ─── PROFILE SUMMARY CARD ─── */}
@@ -281,16 +271,6 @@ export default function Settings() {
         onOpenChange={setAppearanceOpen}
       />
       <StorageDialog open={storageOpen} onOpenChange={setStorageOpen} />
-
-      <ConfirmDialog
-        open={signOutOpen}
-        onOpenChange={setSignOutOpen}
-        title="Sign Out"
-        description="Are you sure you want to sign out of your account?"
-        confirmText="Sign Out"
-        icon={<LogOut className="h-4 w-4 text-zinc-400" />}
-        onConfirm={handleSignOut}
-      />
 
       <ConfirmDialog
         open={deleteOpen}

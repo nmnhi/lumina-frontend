@@ -1,4 +1,4 @@
-import { Loader2, Share2, Trash2 } from "lucide-react";
+import { Share2, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
@@ -12,6 +12,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import HashtagMentionText from "@/components/shared/HashtagMentionText";
+import MiniSpinner from "@/components/shared/MiniSpinner";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/features/auth/useAuth";
 import {
@@ -206,9 +208,10 @@ export default function SharePostDialog({
             </Link>
             {originalPost.bodyText && (
               <div className="px-4 pb-2">
-                <p className="text-xs text-zinc-400 leading-relaxed line-clamp-3 whitespace-pre-line">
-                  {originalPost.bodyText}
-                </p>
+                <HashtagMentionText
+                  text={originalPost.bodyText}
+                  className="text-xs text-zinc-400 leading-relaxed line-clamp-3 whitespace-pre-line"
+                />
               </div>
             )}
             {origMedia.length > 0 && (
@@ -260,7 +263,7 @@ export default function SharePostDialog({
                     disabled={submitting}
                     className="rounded-full bg-red-500/20 text-red-300 hover:bg-red-500/30 px-4 h-8 text-xs font-semibold"
                   >
-                    {submitting && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
+                    {submitting && <MiniSpinner size={14} className="mr-1" />}
                     Xoá
                   </Button>
                 </div>
@@ -291,7 +294,7 @@ export default function SharePostDialog({
                     disabled={submitting || text.trim() === (existingShare?.bodyText ?? "")}
                     className="btn-lumina rounded-full bg-linear-to-r from-electric-blue via-neon-pink to-cyber-purple px-6 h-9 text-sm font-bold text-white shadow-lg cursor-pointer hover:opacity-90"
                   >
-                    {submitting && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
+                    {submitting && <MiniSpinner size={14} className="mr-1" />}
                     {submitting ? "Đang lưu..." : "Cập nhật"}
                   </Button>
                 </div>
@@ -312,7 +315,7 @@ export default function SharePostDialog({
                 disabled={submitting}
                 className="btn-lumina rounded-full bg-linear-to-r from-electric-blue via-neon-pink to-cyber-purple px-6 h-9 text-sm font-bold text-white shadow-lg cursor-pointer hover:opacity-90"
               >
-                {submitting && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
+                {submitting && <MiniSpinner size={14} className="mr-1" />}
                 {submitting ? "Đang đăng..." : "Chia sẻ ngay"}
               </Button>
             </>

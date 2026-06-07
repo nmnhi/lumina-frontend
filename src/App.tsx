@@ -1,14 +1,22 @@
 import { MainLayout } from "@/components/shared/MainLayout";
+import LoadingOverlay from "@/components/shared/LoadingOverlay";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/features/auth/AuthContext";
 import Login from "@/features/auth/page/Login";
 import Register from "@/features/auth/page/Register";
+import ForgotPassword from "@/features/auth/page/ForgotPassword";
+import ResetPassword from "@/features/auth/page/ResetPassword";
 import { useAuth } from "@/features/auth/useAuth";
+import Bookmarks from "@/features/bookmarks/page/Bookmarks";
 import Chat from "@/features/chat/page/Chat";
+import Explore from "@/features/explore/page/Explore";
+import HashtagPage from "@/features/hashtags/page/HashtagPage";
 import Home from "@/features/home/page/Home";
+import Notifications from "@/features/notifications/page/Notifications";
 import Profile from "@/features/profile/page/Profile";
 import Settings from "@/features/settings/page/Settings";
+import PostDetail from "@/features/post/page/PostDetail";
 import {
   Navigate,
   Route,
@@ -23,11 +31,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return (
-      <div className="flex h-screen w-screen items-center justify-center bg-[#09090b] text-white">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-t-transparent border-r-electric-blue"></div>
-      </div>
-    );
+    return <LoadingOverlay variant="neon-arcs" mode="fullscreen" message="Đang tải..." />;
   }
 
   if (!user) {
@@ -64,7 +68,6 @@ function AppContent() {
               <MainLayout>
                 <Home />
               </MainLayout>
-              //{" "}
             </ProtectedRoute>
           }
         />
@@ -75,7 +78,6 @@ function AppContent() {
               <MainLayout>
                 <Chat />
               </MainLayout>
-              //{" "}
             </ProtectedRoute>
           }
         />
@@ -86,7 +88,6 @@ function AppContent() {
               <MainLayout>
                 <Profile />
               </MainLayout>
-              //{" "}
             </ProtectedRoute>
           }
         />
@@ -107,7 +108,56 @@ function AppContent() {
               <MainLayout>
                 <Settings />
               </MainLayout>
-              //{" "}
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/hashtag/:name"
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <HashtagPage />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/explore"
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <Explore />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/bookmarks"
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <Bookmarks />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <Notifications />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/post/:id"
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <PostDetail />
+              </MainLayout>
             </ProtectedRoute>
           }
         />
@@ -118,6 +168,24 @@ function AppContent() {
           element={
             <PublicRoute>
               <Login />
+            </PublicRoute>
+          }
+        />
+
+        <Route
+          path="/forgot-password"
+          element={
+            <PublicRoute>
+              <ForgotPassword />
+            </PublicRoute>
+          }
+        />
+
+        <Route
+          path="/reset-password/:token"
+          element={
+            <PublicRoute>
+              <ResetPassword />
             </PublicRoute>
           }
         />

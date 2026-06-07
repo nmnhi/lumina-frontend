@@ -1,11 +1,11 @@
-import { Image, Smile, Video, X, Loader2 } from "lucide-react";
-import { useRef, useState } from "react";
+import { Image, Smile, Video, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import LoadingOverlay from "@/components/shared/LoadingOverlay";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/features/auth/useAuth";
 import { usePostRefresh } from "@/features/home/context/PostRefreshContext";
@@ -15,6 +15,7 @@ const FALLBACK_AVATAR =
   "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80";
 
 const MAX_FILES = 4;
+const MAX_CHARS = 2000;
 
 interface PreviewItem {
   url: string;
@@ -28,14 +29,26 @@ export default function CreatePostBox() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const [text, setText] = useState("");
   const [previews, setPreviews] = useState<PreviewItem[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
+  // Auto-grow textarea
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 320)}px`;
+  }, [text]);
+
   const avatarUrl = user?.avatarUrl || FALLBACK_AVATAR;
   const firstName = (user?.displayName || "there").split(" ")[0];
   const initials = firstName.charAt(0).toUpperCase();
+  const charCount = text.length;
+  const isOverLimit = charCount > MAX_CHARS;
+  const isNearLimit = charCount > MAX_CHARS * 0.9;
 
   const addFiles = (files: FileList | null, kind: "image" | "video") => {
     if (!files || files.length === 0) return;
@@ -74,6 +87,10 @@ export default function CreatePostBox() {
       toast.error("Bài viết phải có chữ hoặc media.");
       return;
     }
+    if (isOverLimit) {
+      toast.error(`Bài viết vượt quá ${MAX_CHARS} ký tự.`);
+      return;
+    }
 
     try {
       setSubmitting(true);
@@ -89,7 +106,6 @@ export default function CreatePostBox() {
       previews.forEach((p) => URL.revokeObjectURL(p.url));
       setPreviews([]);
       triggerRefresh();
-      toast.success("Đã đăng bài thành công ✨");
     } catch {
       toast.error("Đăng bài thất bại, vui lòng thử lại.");
     } finally {
@@ -97,24 +113,47 @@ export default function CreatePostBox() {
     }
   };
 
+  const canPost = !submitting && !isOverLimit && (text.trim().length > 0 || previews.length > 0);
+
   return (
-    <div className="glass-mac rounded-2xl p-4 space-y-3">
-      {/* Hàng 1: avatar + input */}
-      <div className="flex items-center gap-3">
-        <Avatar size="lg" className="ring-1 ring-white/10">
+    <div className="relative glass-mac rounded-2xl p-4 space-y-3">
+      {submitting && <LoadingOverlay message="Đang đăng bài..." />}
+
+      {/* Twitter-style compose: avatar ở trên trái, textarea bên cạnh */}
+      <div className="flex items-start gap-3">
+        <Avatar size="lg" className="ring-1 ring-white/10 shrink-0">
           <AvatarImage src={avatarUrl} alt="Your avatar" />
           <AvatarFallback className="bg-linear-to-br from-cyber-purple to-electric-blue text-white font-bold">
             {initials}
           </AvatarFallback>
         </Avatar>
-        <div className="flex-1">
-          <Input
+        <div className="flex-1 min-w-0">
+          <textarea
+            ref={textareaRef}
             value={text}
             onChange={(e) => setText(e.target.value)}
             disabled={submitting}
             placeholder={`What's on your mind, ${firstName}?`}
-            className="h-11 rounded-full border-white/10 bg-white/3 px-5 text-sm text-zinc-200 placeholder:text-zinc-500 focus-visible:border-white/20 focus-visible:bg-white/5 focus-visible:ring-0"
+            rows={3}
+            className="w-full resize-none border-0 bg-transparent text-sm text-zinc-100 placeholder-zinc-600 outline-none scrollbar-none leading-relaxed"
           />
+          {/* Char counter */}
+          {(isNearLimit || isOverLimit) && (
+            <div className="mt-1 flex justify-end">
+              <span
+                className={cn(
+                  "text-[10px] font-mono tabular-nums",
+                  isOverLimit
+                    ? "text-red-400 font-bold"
+                    : isNearLimit
+                      ? "text-amber-400"
+                      : "text-zinc-500"
+                )}
+              >
+                {charCount}/{MAX_CHARS}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -171,7 +210,7 @@ export default function CreatePostBox() {
             iconClassName="bg-linear-to-br from-cyber-purple to-electric-blue"
           />
           <PostAction
-            label="Live"
+            label="Video"
             onClick={() => videoInputRef.current?.click()}
             disabled={submitting}
             icon={<Video className="h-3 w-3 text-white" strokeWidth={2.5} />}
@@ -187,11 +226,10 @@ export default function CreatePostBox() {
         </div>
         <Button
           onClick={handlePost}
-          disabled={submitting}
-          className="rounded-full bg-linear-to-r from-cyber-purple to-neon-pink px-6 h-9 text-sm font-bold text-white shadow-lg shadow-cyber-purple/30 hover:brightness-110 hover:shadow-cyber-purple/50 border-0 transition"
+          disabled={!canPost}
+          className="rounded-full bg-linear-to-r from-cyber-purple to-neon-pink px-6 h-9 text-sm font-bold text-white shadow-lg shadow-cyber-purple/30 hover:brightness-110 hover:shadow-cyber-purple/50 border-0 transition disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {submitting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-          {submitting ? "Posting..." : "Post"}
+          Post
         </Button>
       </div>
 

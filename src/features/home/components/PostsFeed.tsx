@@ -1,14 +1,23 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import type { Post } from "@/types";
-import { getNewsfeedApi } from "@/features/home/api/newsfeed";
+import {
+  getNewsfeedApi,
+  type FeedType,
+  type NewsfeedResult,
+} from "@/features/home/api/newsfeed";
+import WhoToFollowInline from "@/features/follow/components/WhoToFollowInline";
 import PostCard from "./PostCard";
 import MediaLightbox from "./MediaLightbox";
-import { Loader2 } from "lucide-react";
 import { PostCardSkeleton } from "@/components/shared/PostCardSkeleton";
 
 interface PostsFeedProps {
-  activeTab?: "For You" | "Following";
+  /** When using the default fetcher, controls which feed (forYou / following) is fetched. */
+  activeTab?: FeedType;
   refreshKey?: number;
+  /** Custom fetcher. Defaults to getNewsfeedApi. Useful for hashtag / search / bookmarks. */
+  fetchFn?: (cursor?: string) => Promise<{ data: NewsfeedResult }>;
+  /** Empty state message override */
+  emptyMessage?: string;
 }
 
 function normalizeMedia(raw: Post["media"]): string[] {
@@ -19,43 +28,63 @@ function normalizeMedia(raw: Post["media"]): string[] {
   return [];
 }
 
-export default function PostsFeed({ activeTab: _activeTab, refreshKey }: PostsFeedProps) {
+export default function PostsFeed({
+  activeTab = "forYou",
+  refreshKey,
+  fetchFn,
+  emptyMessage = "Follow people to see their posts here.",
+}: PostsFeedProps) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [cursor, setCursor] = useState<string | undefined>(undefined);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
 
-  const fetchPosts = useCallback(async (cursorVal?: string, keep?: boolean) => {
-    if (!cursorVal) setLoading(true);
-    try {
-      const res = await getNewsfeedApi(cursorVal);
-      const newPosts = res.data.posts;
-      if (keep) {
-        setPosts((prev) => [...prev, ...newPosts]);
-      } else {
-        setPosts(newPosts);
-      }
-      setCursor(res.data.nextCursor);
-      if (!res.data.nextCursor) setHasMore(false);
-    } catch (err) {
-      console.error("Failed to fetch newsfeed:", err);
-    } finally {
-      setLoading(false);
-      setLoadingMore(false);
-    }
-  }, []);
+  // If a custom fetcher is provided, activeTab is ignored.
+  const isCustom = !!fetchFn;
+  const fetcher = useCallback(
+    (cursorVal?: string) =>
+      isCustom
+        ? (fetchFn as NonNullable<typeof fetchFn>)(cursorVal)
+        : getNewsfeedApi(cursorVal, activeTab),
+    [isCustom, fetchFn, activeTab]
+  );
 
-  // Only watch refreshKey — fetch on mount and when refreshKey changes
-  const keyRef = useRef(refreshKey);
+  const fetchPosts = useCallback(
+    async (cursorVal?: string, keep?: boolean) => {
+      if (!cursorVal) setLoading(true);
+      try {
+        const res = await fetcher(cursorVal);
+        const newPosts = res.data.posts;
+        if (keep) {
+          setPosts((prev) => [...prev, ...newPosts]);
+        } else {
+          setPosts(newPosts);
+        }
+        setCursor(res.data.nextCursor);
+        if (!res.data.nextCursor) setHasMore(false);
+      } catch (err) {
+        console.error("Failed to fetch posts:", err);
+      } finally {
+        setLoading(false);
+        setLoadingMore(false);
+      }
+    },
+    [fetcher]
+  );
+
+  // Watch refreshKey + activeTab — re-fetch when either changes
+  const keyRef = useRef(`${refreshKey}-${activeTab}-${isCustom}`);
   useEffect(() => {
-    if (refreshKey !== keyRef.current) {
-      keyRef.current = refreshKey;
+    const currentKey = `${refreshKey}-${activeTab}-${isCustom}`;
+    if (keyRef.current !== currentKey) {
+      keyRef.current = currentKey;
       setCursor(undefined);
       setHasMore(true);
+      setPosts([]);
     }
     fetchPosts();
-  }, [refreshKey, fetchPosts]);
+  }, [refreshKey, activeTab, isCustom, fetchPosts]);
 
   // Infinite scroll
   useEffect(() => {
@@ -112,18 +141,23 @@ export default function PostsFeed({ activeTab: _activeTab, refreshKey }: PostsFe
       ) : posts.length === 0 ? (
         <div className="glass-mac rounded-2xl py-16 text-center text-zinc-500">
           <p className="text-sm font-medium">No posts yet</p>
-          <p className="text-xs mt-1">Follow people to see their posts here.</p>
+          <p className="text-xs mt-1">{emptyMessage}</p>
         </div>
       ) : (
         <>
-          {posts.map((post) => (
-            <PostCard
-              key={post.id}
-              post={post}
-              onMediaClick={(idx) => openLightbox(post, idx)}
-              onPostUpdated={handlePostUpdated}
-              onPostDeleted={handlePostDeleted}
-            />
+          {posts.map((post, idx) => (
+            <Fragment key={post.id}>
+              <PostCard
+                post={post}
+                onMediaClick={(mediaIdx) => openLightbox(post, mediaIdx)}
+                onPostUpdated={handlePostUpdated}
+                onPostDeleted={handlePostDeleted}
+              />
+              {/* Chèn "Gợi ý cho bạn" sau mỗi 5 post (chỉ ở newsfeed, không phải hashtag/bookmarks) */}
+              {!isCustom && (idx + 1) % 5 === 0 && idx < posts.length - 1 && (
+                <WhoToFollowInline />
+              )}
+            </Fragment>
           ))}
           {loadingMore && (
             <>

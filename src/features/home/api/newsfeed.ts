@@ -12,10 +12,17 @@ export interface NewsfeedResult {
   nextCursor?: string;
 }
 
-export const getNewsfeedApi = async (cursor?: string) => {
-  const params: Record<string, string> = {};
+export type FeedType = "forYou" | "following";
+
+export const getNewsfeedApi = async (
+  cursor?: string,
+  type: FeedType = "forYou"
+) => {
+  const params: Record<string, string> = { type };
   if (cursor) params.cursor = cursor;
   const query = new URLSearchParams(params).toString();
-  const response = await api.get<ApiResponse<NewsfeedResult>>(`/newsfeed${query ? `?${query}` : ""}`);
+  const response = await api.get<ApiResponse<NewsfeedResult>>(
+    `/newsfeed${query ? `?${query}` : ""}`
+  );
   return response.data;
 };

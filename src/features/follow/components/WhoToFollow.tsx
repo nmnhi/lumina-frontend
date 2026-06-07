@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Loader2, RefreshCw, UserPlus, UserCheck } from "lucide-react";
+import { RefreshCw, UserPlus, UserCheck } from "lucide-react";
 import {
   getSuggestedUsersApi,
   toggleFollowApi,
   type SuggestedUser
 } from "@/features/follow/api/follow";
+import MiniSpinner from "@/components/shared/MiniSpinner";
 import { UserRowSkeleton } from "@/components/shared/PostCardSkeleton";
 
 const FALLBACK_AVATAR =
@@ -66,7 +67,7 @@ export default function WhoToFollow() {
           aria-label="Refresh suggestions"
         >
           {loading ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            <MiniSpinner size={14} />
           ) : (
             <RefreshCw className="h-3.5 w-3.5" />
           )}
@@ -132,7 +133,7 @@ export default function WhoToFollow() {
                 }`}
               >
                 {pendingId === user.id ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <MiniSpinner size={14} />
                 ) : user.isFollowing ? (
                   <UserCheck className="h-3.5 w-3.5" />
                 ) : (

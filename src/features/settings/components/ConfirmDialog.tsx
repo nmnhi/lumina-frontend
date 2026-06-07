@@ -1,4 +1,3 @@
-import { Loader2 } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -10,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import MiniSpinner from "@/components/shared/MiniSpinner";
 import { cn } from "@/lib/utils";
 
 interface ConfirmDialogProps {
@@ -80,7 +80,7 @@ export default function ConfirmDialog({
                 : "btn-lumina bg-linear-to-r from-electric-blue via-neon-pink to-cyber-purple hover:opacity-90"
             )}
           >
-            {loading && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />}
+            {loading && <MiniSpinner size={14} className="mr-1.5" />}
             {loading ? "Working..." : confirmText}
           </Button>
         </DialogFooter>

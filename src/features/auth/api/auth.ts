@@ -44,3 +44,13 @@ export const changePasswordApi = async (data: ChangePasswordData) => {
   const response = await api.patch<ApiResponse<null>>("/auth/change-password", data);
   return response.data;
 };
+
+export const forgotPasswordApi = async (email: string) => {
+  const response = await api.post<ApiResponse<null>>("/auth/forgot-password", { email });
+  return response.data;
+};
+
+export const resetPasswordApi = async (token: string, password: string) => {
+  const response = await api.post<ApiResponse<null>>(`/auth/reset-password/${token}`, { password });
+  return response.data;
+};

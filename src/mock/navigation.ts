@@ -1,5 +1,6 @@
 import {
   Home,
+  Compass,
   MessageSquare,
   User,
   Settings,
@@ -15,6 +16,7 @@ export interface NavItem {
 
 export const navItems: NavItem[] = [
   { path: "/", icon: Home, label: "Home" },
+  { path: "/explore", icon: Compass, label: "Explore" },
   { path: "/chat", icon: MessageSquare, label: "Messages", badge: "12" },
   { path: "/profile", icon: User, label: "Profile" },
   { path: "/settings", icon: Settings, label: "Settings" },

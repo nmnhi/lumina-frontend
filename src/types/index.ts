@@ -23,6 +23,10 @@ export interface User {
 
   // Extra fields from API responses
   isFollowing?: boolean;
+  _count?: {
+    followers: number;
+    following: number;
+  };
 }
 
 // 📄 Post model
@@ -44,6 +48,7 @@ export interface Post {
     sharedPosts: number;
   };
   isLiked?: boolean;
+  isBookmarked?: boolean;
   comments?: Comment[];
   likes?: Like[];
 }

@@ -154,11 +154,6 @@ export default function StoriesBar() {
     ? [myLatestStory, ...stories.filter((s) => s.authorId !== currentUserId)]
     : stories.filter((s) => s.authorId !== currentUserId);
 
-  // Debug: log to help diagnose missing stories
-  useEffect(() => {
-    console.log("[StoriesBar] total stories:", stories.length, "viewable:", viewableStories.length, "currentUserId:", currentUserId, "myLatestStory:", myLatestStory?.id);
-  }, [stories, viewableStories, currentUserId, myLatestStory]);
-
   const openStory = (storyId: string) => {
     const idx = viewableStories.findIndex((s) => s.id === storyId);
     if (idx === -1) return;

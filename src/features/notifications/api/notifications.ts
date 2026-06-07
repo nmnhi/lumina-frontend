@@ -8,7 +8,7 @@ interface ApiResponse<T> {
 
 export interface NotificationItem {
   id: string;
-  type: "LIKE" | "COMMENT" | "FOLLOW";
+  type: "LIKE" | "COMMENT" | "FOLLOW" | "SHARE";
   senderId: string;
   receiverId: string;
   postId?: string | null;
@@ -23,11 +23,16 @@ export interface NotificationItem {
   };
 }
 
+interface NotificationsResponse {
+  notifications: NotificationItem[];
+  nextCursor?: string;
+}
+
 export const getNotificationsApi = async (cursor?: string) => {
   const params: Record<string, string> = {};
   if (cursor) params.cursor = cursor;
   const query = new URLSearchParams(params).toString();
-  const response = await api.get<ApiResponse<NotificationItem[]>>(`/notifications${query ? `?${query}` : ""}`);
+  const response = await api.get<ApiResponse<NotificationsResponse>>(`/notifications${query ? `?${query}` : ""}`);
   return response.data;
 };
 

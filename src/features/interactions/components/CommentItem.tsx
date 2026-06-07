@@ -1,10 +1,17 @@
-import { MessageSquare, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { AlertTriangle, MessageSquare, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Tooltip,
   TooltipContent,
@@ -63,6 +70,7 @@ export default function CommentItem({
   const [editContent, setEditContent] = useState(comment.content);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -109,8 +117,6 @@ export default function CommentItem({
   };
 
   const handleDelete = async () => {
-    if (!confirm("Delete this comment?")) return;
-
     try {
       setIsDeleting(true);
       await deleteCommentApi(postId, comment.id);
@@ -120,7 +126,13 @@ export default function CommentItem({
       toast.error("Failed to delete comment.");
     } finally {
       setIsDeleting(false);
+      setConfirmDelete(false);
     }
+  };
+
+  const handleConfirmDelete = () => {
+    setDropdownOpen(false);
+    setConfirmDelete(true);
   };
 
   const handleCancel = () => {
@@ -181,10 +193,7 @@ export default function CommentItem({
                     </button>
                     <Separator className="my-0.5 bg-white/5" />
                     <button
-                      onClick={() => {
-                        handleDelete();
-                        setDropdownOpen(false);
-                      }}
+                      onClick={handleConfirmDelete}
                       disabled={isDeleting}
                       className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-red-400 hover:bg-red-500/10 hover:text-red-300 transition disabled:opacity-50"
                     >
@@ -278,6 +287,43 @@ export default function CommentItem({
           ))}
         </div>
       )}
+
+      {/* Delete confirmation dialog */}
+      <Dialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <DialogContent className="glass-mac border-white/10 bg-[#09090b] text-zinc-100 sm:max-w-sm p-0 gap-0 ring-1 ring-white/10">
+          <div className="p-5 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-500/10">
+                <AlertTriangle className="h-5 w-5 text-red-400" />
+              </div>
+              <div>
+                <DialogTitle className="text-sm font-bold text-white">Delete comment?</DialogTitle>
+                <DialogDescription className="text-xs text-zinc-500 mt-0.5">
+                  This action cannot be undone.
+                </DialogDescription>
+              </div>
+            </div>
+          </div>
+          <Separator className="bg-white/5" />
+          <div className="flex items-center justify-end gap-2 px-5 py-4">
+            <Button
+              variant="ghost"
+              onClick={() => setConfirmDelete(false)}
+              disabled={isDeleting}
+              className="text-xs text-zinc-400 hover:text-zinc-200 h-8 px-3"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="text-xs h-8 px-3 bg-red-500 hover:bg-red-600 text-white font-semibold"
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

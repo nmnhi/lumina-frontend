@@ -1,4 +1,4 @@
-import { Database, Download, HardDrive, Image, Loader2, Trash2 } from "lucide-react";
+import { Database, Download, HardDrive, Image, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -10,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import MiniSpinner from "@/components/shared/MiniSpinner";
 import { Separator } from "@/components/ui/separator";
 
 interface StorageDialogProps {
@@ -130,7 +131,7 @@ export default function StorageDialog({ open, onOpenChange }: StorageDialogProps
               className="h-10 justify-center rounded-xl border-white/10 bg-white/3 text-zinc-200 hover:bg-white/5"
             >
               {clearing ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <MiniSpinner size={16} className="mr-2" />
               ) : (
                 <Trash2 className="h-4 w-4 mr-2" />
               )}
@@ -144,7 +145,7 @@ export default function StorageDialog({ open, onOpenChange }: StorageDialogProps
               className="h-10 justify-center rounded-xl border-white/10 bg-white/3 text-zinc-200 hover:bg-white/5"
             >
               {downloading ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <MiniSpinner size={16} className="mr-2" />
               ) : (
                 <Download className="h-4 w-4 mr-2" />
               )}

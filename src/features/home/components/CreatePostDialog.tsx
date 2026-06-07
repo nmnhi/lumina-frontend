@@ -1,4 +1,4 @@
-import { Image, Smile, Video, X, Loader2 } from "lucide-react";
+import { Image, Smile, Video, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -11,6 +11,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import LoadingOverlay from "@/components/shared/LoadingOverlay";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/features/auth/useAuth";
@@ -20,6 +21,7 @@ const FALLBACK_AVATAR =
   "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80";
 
 const MAX_FILES = 4;
+const MAX_CHARS = 2000;
 
 interface PreviewItem {
   url: string;
@@ -46,6 +48,12 @@ export default function CreatePostDialog({
   const [text, setText] = useState("");
   const [previews, setPreviews] = useState<PreviewItem[]>([]);
   const [submitting, setSubmitting] = useState(false);
+
+  const charsLeft = MAX_CHARS - text.length;
+  const isOverLimit = charsLeft < 0;
+  const hasText = text.trim().length > 0;
+  const hasMedia = previews.length > 0;
+  const canPost = (hasText || hasMedia) && !isOverLimit;
 
   const avatarUrl = user?.avatarUrl || FALLBACK_AVATAR;
   const firstName = (user?.displayName || "there").split(" ")[0];
@@ -97,10 +105,16 @@ export default function CreatePostDialog({
 
     try {
       setSubmitting(true);
-      await createPostApi({ bodyText: text.trim() || undefined });
+
+      // Build FormData for multipart upload
+      const formData = new FormData();
+      if (text.trim()) formData.append("bodyText", text.trim());
+      previews.forEach((p) => formData.append("files", p.file));
+
+      await createPostApi(formData);
+
       resetForm();
       onOpenChange(false);
-      toast.success("Đã đăng bài thành công ✨");
       onSuccess?.();
     } catch {
       toast.error("Đăng bài thất bại, vui lòng thử lại.");
@@ -116,7 +130,8 @@ export default function CreatePostDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="glass-mac border-white/10 bg-[#09090b] text-zinc-100 sm:max-w-lg p-0 gap-0 ring-1 ring-white/10">
+      <DialogContent className="relative glass-mac border-white/10 bg-[#09090b] text-zinc-100 sm:max-w-lg p-0 gap-0 ring-1 ring-white/10">
+        {submitting && <LoadingOverlay message="Đang đăng bài..." />}
         <DialogHeader className="px-5 pt-5 pb-3">
           <DialogTitle className="text-base font-bold text-white">
             Create Post
@@ -147,8 +162,18 @@ export default function CreatePostDialog({
                 disabled={submitting}
                 placeholder={`What's on your mind, ${firstName}?`}
                 rows={4}
+                maxLength={MAX_CHARS + 50}
                 className="mt-2 w-full resize-none bg-transparent text-sm text-zinc-100 placeholder-zinc-600 outline-none scrollbar-none"
               />
+              {text.length > 0 && (
+                <span
+                  className={`text-xs font-medium mt-1 block text-right ${
+                    isOverLimit ? "text-red-400" : "text-zinc-500"
+                  }`}
+                >
+                  {charsLeft}
+                </span>
+              )}
             </div>
           </div>
 
@@ -211,7 +236,7 @@ export default function CreatePostDialog({
               iconClassName="bg-linear-to-br from-cyber-purple to-electric-blue"
             />
             <PostAction
-              label="Live"
+              label="Video"
               onClick={() => videoInputRef.current?.click()}
               disabled={submitting}
               icon={<Video className="h-3 w-3 text-white" strokeWidth={2.5} />}
@@ -229,11 +254,10 @@ export default function CreatePostDialog({
           </div>
           <Button
             onClick={handlePost}
-            disabled={submitting}
-            className="btn-lumina rounded-full bg-linear-to-r from-electric-blue via-neon-pink to-cyber-purple px-6 h-9 text-sm font-bold text-white shadow-lg cursor-pointer hover:opacity-90"
+            disabled={!canPost || submitting}
+            className="btn-lumina rounded-full bg-linear-to-r from-electric-blue via-neon-pink to-cyber-purple px-6 h-9 text-sm font-bold text-white shadow-lg cursor-pointer hover:opacity-90 disabled:opacity-50"
           >
-            {submitting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-            {submitting ? "Posting..." : "Post"}
+            Post
           </Button>
         </div>
 

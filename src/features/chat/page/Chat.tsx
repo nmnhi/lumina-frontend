@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/features/auth/useAuth";
 import {
   Search, Send, Phone, Video, MoreHorizontal,
-  MessageSquare, Loader2, Check, CheckCheck, ChevronDown, ArrowLeft
+  MessageSquare, Check, CheckCheck, ChevronDown, ArrowLeft
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { getConversationsApi, sendMessageApi, getMessagesApi, markAsSeenApi } from "@/features/chat/api/chat";
 import type { Conversation, Message } from "@/types";
 import { useUnread } from "@/context/UnreadContext";
+import MiniSpinner from "@/components/shared/MiniSpinner";
 import { ConversationRowSkeleton, MessageBubbleSkeleton } from "@/components/shared/PostCardSkeleton";
 
 const FALLBACK_AVATAR =
@@ -473,7 +474,7 @@ export default function Chat() {
             disabled={sending || !message.trim()}
             className="btn-lumina rounded-xl bg-linear-to-r from-electric-blue via-neon-pink to-cyber-purple text-white h-auto p-2.5 sm:p-3"
           >
-            {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            {sending ? <MiniSpinner size={16} /> : <Send className="h-4 w-4" />}
           </Button>
         </div>
       </div>

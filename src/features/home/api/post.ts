@@ -52,6 +52,12 @@ export const getMyPostsApi = async () => {
   return response.data;
 };
 
+/** Get a single post by ID */
+export const getPostByIdApi = async (postId: string) => {
+  const response = await api.get<ApiResponse<Post>>(`/post/${postId}`);
+  return response.data;
+};
+
 /** Get user posts by userId */
 export const getUserPostsApi = async (userId: string, cursor?: string) => {
   const params: Record<string, string> = {};

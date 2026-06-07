@@ -1,4 +1,4 @@
-import { Image, Loader2, Plus, Video, X } from "lucide-react";
+import { Image, Plus, Video, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -10,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import LoadingOverlay from "@/components/shared/LoadingOverlay";
 import { Separator } from "@/components/ui/separator";
 import { createStoryApi } from "@/features/home/api/stories";
 
@@ -68,7 +69,6 @@ export default function CreateStoryDialog({
     try {
       setSubmitting(true);
       await createStoryApi(preview.file);
-      toast.success("Đã tạo story thành công ✨");
       resetForm();
       onOpenChange(false);
       onSuccess?.();
@@ -86,7 +86,8 @@ export default function CreateStoryDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="glass-mac border-white/10 bg-[#09090b] text-zinc-100 sm:max-w-md p-0 gap-0 ring-1 ring-white/10">
+      <DialogContent className="relative glass-mac border-white/10 bg-[#09090b] text-zinc-100 sm:max-w-md p-0 gap-0 ring-1 ring-white/10">
+        {submitting && <LoadingOverlay message="Đang tạo story..." />}
         <DialogHeader className="px-5 pt-5 pb-3">
           <DialogTitle className="text-base font-bold text-white">
             Create Story
@@ -188,8 +189,7 @@ export default function CreateStoryDialog({
             disabled={submitting || !preview}
             className="btn-lumina rounded-full bg-linear-to-r from-electric-blue via-neon-pink to-cyber-purple px-6 h-9 text-sm font-bold text-white shadow-lg cursor-pointer hover:opacity-90"
           >
-            {submitting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-            {submitting ? "Creating..." : "Create Story"}
+            Create Story
           </Button>
         </div>
 

@@ -1,4 +1,4 @@
-import { Loader2, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -11,6 +11,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import MiniSpinner from "@/components/shared/MiniSpinner";
 import { deletePostApi } from "@/features/home/api/post";
 
 interface DeletePostConfirmDialogProps {
@@ -72,7 +73,7 @@ export default function DeletePostConfirmDialog({
             className="rounded-full px-6 h-9 text-sm font-bold cursor-pointer"
           >
             {submitting && (
-              <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
+              <MiniSpinner size={14} className="mr-1" />
             )}
             {submitting ? "Deleting..." : "Delete"}
           </Button>

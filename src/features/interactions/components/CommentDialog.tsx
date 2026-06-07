@@ -37,15 +37,12 @@ export default function CommentDialog({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const [replyTo, setReplyTo] = useState<{ id: string; username: string; displayName: string } | null>(null);
-  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
-
   const fetchComments = useCallback(async () => {
     setLoading(true);
     setError(false);
     try {
       const res = await getCommentsApi(postId);
       setComments(res.data);
-      setHasLoadedOnce(true);
     } catch {
       setError(true);
       toast.error("Failed to load comments.");
@@ -54,14 +51,12 @@ export default function CommentDialog({
     }
   }, [postId]);
 
-  /* Fetch comments only the first time dialog opens — reuse cached data on re-open */
+  /* Reload comments every time dialog opens — ensures fresh data */
   useEffect(() => {
-    if (open && !hasLoadedOnce) {
+    if (open) {
       fetchComments();
     }
-  }, [open, hasLoadedOnce, fetchComments]);
-
-  /* Fetch when dialog opens — first load fetches, subsequent opens use cached data */
+  }, [open, fetchComments]);
 
   const handleCommentCreated = useCallback(() => {
     /* Refetch to get the correct tree structure + notify parent of new count */

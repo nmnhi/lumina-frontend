@@ -1,9 +1,10 @@
-import { Loader2, Send, X } from "lucide-react";
+import { Send, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import MiniSpinner from "@/components/shared/MiniSpinner";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/features/auth/useAuth";
 import { createCommentApi } from "@/features/interactions/api/interactions";
@@ -148,7 +149,7 @@ export default function CommentInput({
             aria-label="Send comment"
           >
             {submitting ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <MiniSpinner size={16} />
             ) : (
               <Send className="h-4 w-4" />
             )}
